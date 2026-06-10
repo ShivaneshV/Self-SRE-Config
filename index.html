@@ -44,6 +44,11 @@
         /* Refined Animations */
         .fast-blinking { animation: fast-blink 0.6s linear infinite; }
         @keyframes fast-blink { 50% { opacity: 0.4; } }
+
+        /* Smooth Tab Transitions */
+        .tab-pane {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
     </style>
 </head>
 <body class="p-4 md:p-6 h-screen flex flex-col gap-5 overflow-hidden">
@@ -89,7 +94,8 @@
 
     <div class="flex-grow overflow-hidden relative">
 
-        <div id="tab-mission" class="h-full grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <!-- Live Monitoring Pane -->
+        <div id="tab-mission" class="tab-pane h-full grid grid-cols-1 lg:grid-cols-12 gap-5 opacity-100 transform translate-y-0 duration-300">
             
             <div class="lg:col-span-4 flex flex-col gap-5 overflow-y-auto pb-2 pr-1">
                 <div class="glass-panel p-5">
@@ -198,7 +204,8 @@
             </div>
         </div>
 
-        <div id="tab-cicd" class="h-full hidden flex flex-col gap-6">
+        <!-- CI/CD Bio-Pipeline Pane -->
+        <div id="tab-cicd" class="tab-pane h-full hidden flex flex-col gap-6 opacity-0 transform translate-y-4 duration-300">
             <div class="glass-panel p-8 md:p-12 h-full overflow-y-auto relative flex flex-col border-t-2 border-t-indigo-500">
                 <div class="flex justify-between items-start mb-10 shrink-0">
                     <div>
@@ -252,7 +259,8 @@
             </div>
         </div>
 
-        <div id="tab-docs" class="h-full hidden">
+        <!-- Documentation Pane -->
+        <div id="tab-docs" class="tab-pane h-full hidden opacity-0 transform translate-y-4 duration-300">
             <div class="glass-panel p-10 lg:p-16 h-full overflow-y-auto text-slate-300 border-t-2 border-t-slate-500">
                 <div class="max-w-3xl mx-auto">
                     <h2 class="text-3xl font-bold text-slate-100 mb-2 tracking-tight">System Architecture</h2>
@@ -289,14 +297,34 @@
 
     </div>
 
+    <!-- Floating SRE Alert Banner -->
+    <div id="failover-banner" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 border border-indigo-500/30 px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4 z-50 transition-all duration-500 translate-y-32 opacity-0">
+        <div class="w-3.5 h-3.5 bg-indigo-500 rounded-full animate-ping shrink-0 shadow-[0_0_10px_#6366f1]"></div>
+        <div class="text-xs font-semibold text-slate-200 shrink-0">
+            SRE Alert: Bio-Linter Failed. AI Proxy twin auto-scaled workload.
+        </div>
+        <button onclick="returnToDashboard()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold px-4 py-2 rounded-lg transition-colors shrink-0 shadow-md">
+            Return to Mission Control
+        </button>
+    </div>
+
     <script>
-        // TAB LOGIC
+        // TAB LOGIC WITH TRANSITIONS
         function switchTab(tabId) {
             ['tab-mission', 'tab-cicd', 'tab-docs'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
+                const pane = document.getElementById(id);
+                pane.classList.add('hidden');
+                pane.classList.remove('opacity-100', 'translate-y-0');
+                pane.classList.add('opacity-0', 'translate-y-4');
                 document.getElementById(id.replace('tab-', 'btn-')).classList.replace('tab-active', 'tab-inactive');
             });
-            document.getElementById(tabId).classList.remove('hidden');
+            
+            const activePane = document.getElementById(tabId);
+            activePane.classList.remove('hidden');
+            activePane.offsetHeight; // force reflow
+            activePane.classList.remove('opacity-0', 'translate-y-4');
+            activePane.classList.add('opacity-100', 'translate-y-0');
+            
             document.getElementById(tabId.replace('tab-', 'btn-')).classList.replace('tab-inactive', 'tab-active');
         }
 
@@ -317,12 +345,93 @@
             logStream.scrollTop = logStream.scrollHeight;
         }
 
+        // RESET ROUTINE
+        function resetDashboard() {
+            // Reset header
+            document.getElementById('header-box').className = "flex justify-between items-center glass-panel p-4 md:px-6 shrink-0 transition-colors duration-500";
+            document.getElementById('header-box').classList.remove('bg-rose-950/10');
+            
+            const statusContainer = document.getElementById('status-container');
+            statusContainer.className = "flex items-center gap-2.5 border border-slate-700 bg-slate-800/50 px-4 py-2 rounded-lg transition-colors duration-500";
+            document.getElementById('status-text').innerText = 'Operational';
+            document.getElementById('status-text').className = 'text-xs font-bold text-emerald-400 tracking-wide uppercase';
+            document.getElementById('status-dot').className = 'w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse';
+            
+            // Reset biometrics
+            document.getElementById('hr-val').innerHTML = '72 <span class="text-sm font-sans font-normal text-slate-500">bpm</span>';
+            document.getElementById('hr-val').className = "text-2xl font-bold font-mono text-slate-100 transition-all";
+            document.getElementById('hr-box').className = "bg-slate-800/50 p-3.5 rounded-lg border border-slate-700/50 transition-colors duration-500";
+            document.getElementById('hr-box').classList.remove('fast-blinking');
+
+            document.getElementById('stress-val').innerHTML = '42<span class="text-sm font-sans font-normal text-slate-500">%</span>';
+            document.getElementById('stress-val').className = "text-2xl font-bold font-mono text-slate-100 transition-all";
+            document.getElementById('stress-box').className = "bg-slate-800/50 p-3.5 rounded-lg border border-slate-700/50 transition-colors duration-500";
+            document.getElementById('stress-box').classList.remove('fast-blinking');
+            
+            document.getElementById('fatigue-val').innerText = 'Nominal';
+            document.getElementById('fatigue-val').className = "text-base font-semibold text-emerald-400 mt-2";
+
+            // Reset tasks
+            const standup = document.getElementById('task-standup');
+            standup.className = "bg-slate-800/40 p-3.5 rounded-lg border border-slate-700/50 transition-all duration-500 relative overflow-hidden group";
+            standup.classList.remove('opacity-40');
+            standup.querySelector('.task-name').className = "text-sm font-semibold text-slate-200 task-name transition-colors";
+            standup.querySelector('.task-name').style.textDecoration = 'none';
+            standup.querySelector('.task-name').style.color = '#e2e8f0';
+            standup.querySelector('.bar-accent').className = "absolute left-0 top-0 bottom-0 w-1 bg-slate-500 transition-colors duration-500 bar-accent";
+            const badge1 = standup.querySelector('.schedule-badge');
+            badge1.innerText = 'ACTIVE';
+            badge1.className = 'text-[10px] font-bold tracking-wide text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 rounded schedule-badge transition-colors duration-500';
+
+            const pitch = document.getElementById('task-pitch');
+            pitch.className = "bg-slate-800/40 p-3.5 rounded-lg border border-slate-700/50 transition-all duration-500 relative overflow-hidden";
+            pitch.classList.remove('opacity-40', 'shadow-[0_0_15px_rgba(168,85,247,0.3)]');
+            pitch.querySelector('.task-name').className = "text-sm font-semibold text-slate-200 task-name transition-colors";
+            pitch.querySelector('.task-name').style.textDecoration = 'none';
+            pitch.querySelector('.task-name').style.color = '#e2e8f0';
+            pitch.querySelector('.bar-accent').className = "absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 transition-colors duration-500 bar-accent";
+            const badge2 = pitch.querySelector('.schedule-badge');
+            badge2.innerText = 'ACTIVE';
+            badge2.className = 'text-[10px] font-bold tracking-wide text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 rounded schedule-badge transition-colors duration-500';
+
+            // Reset consoles
+            agentConsole.innerHTML = `
+                <p class="text-slate-500 mb-1"># Gemini 1.5 Pro Orchestrator</p>
+                <p class="text-slate-500 mb-4"># Identity Sync: GitLab MCP Connected.</p>
+                <p>Daemon initialized. Monitoring biological telemetry stream...</p>
+                <p>Waiting for anomalies to execute autonomous load-balancing.</p>
+            `;
+            logStream.innerHTML = `
+                <p>[INFO] SRE Webhook listener active.</p>
+                <p>[INFO] Awaiting GitLab push events...</p>
+            `;
+
+            document.getElementById('webhook-dot').className = "w-1.5 h-1.5 bg-emerald-500 rounded-full";
+            document.getElementById('webhook-text').className = "text-[10px] font-mono text-slate-400";
+            document.getElementById('webhook-text').innerText = "PORT:5000";
+
+            document.getElementById('input-status').innerText = "Listening";
+            document.getElementById('input-status').className = "text-[10px] uppercase font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded tracking-wider";
+
+            // Hide banner
+            const banner = document.getElementById('failover-banner');
+            banner.classList.add('translate-y-32', 'opacity-0');
+            banner.classList.remove('translate-y-0', 'opacity-100');
+            
+            // Enable anomaly btn
+            const btn = document.getElementById('anomaly-btn');
+            btn.disabled = false;
+            btn.classList.remove('opacity-50');
+        }
+
         // MISSION CONTROL LOGIC
         document.getElementById('anomaly-btn').addEventListener('click', async function() {
             switchTab('tab-mission');
             isAborted = false;
             this.disabled = true;
             this.classList.add('opacity-50');
+
+            resetDashboard();
 
             // Visual Spike
             document.getElementById('hr-val').innerHTML = '154 <span class="text-sm font-normal text-rose-400/70 font-sans">bpm</span>';
@@ -418,19 +527,51 @@
             standup.classList.add('opacity-40');
             standup.querySelector('.task-name').classList.replace('text-slate-200', 'text-slate-500');
             standup.querySelector('.task-name').style.textDecoration = 'line-through';
+            standup.querySelector('.task-name').style.color = '#64748b';
             standup.querySelector('.bar-accent').classList.replace('bg-slate-500', 'bg-slate-700');
             const badge1 = standup.querySelector('.schedule-badge');
             badge1.innerText = 'DELEGATED';
             badge1.className = 'text-[10px] font-bold tracking-wider text-amber-500 border border-amber-500/30 bg-amber-500/10 px-2 py-1 rounded';
             
+            appendLog("\n[SUCCESS] System Status Updated: 🔴 OFFLINE", "text-red-400 font-bold");
             await sleep(800);
             appendLog("[SUCCESS] P2 Task (Standup) -> Delegated to fallback via API.", "text-amber-400");
             
-            // Task 2: AI Twin
-            await sleep(1200);
-            appendLog("\n[WARN] P1 Task Detected (Q3 Pitch). Standard cancellation blocked.", "text-amber-500 font-medium");
+            await sleep(1000);
+            appendLog("\n>> [ALERT] SRE Pipeline linting audit required...", "text-indigo-400 font-semibold animate-pulse");
             await sleep(800);
-            appendLog(">> INITIATING AI PROXY AUTO-SCALE...", "text-indigo-400 font-bold animate-pulse");
+            appendLog(">> Redirecting to GitLab Bio-Pipeline Linter...", "text-indigo-400 font-semibold");
+            
+            await sleep(1250);
+            
+            // TRANSITION TO TABS
+            switchTab('tab-cicd');
+            
+            // Auto run linter
+            await runLinter();
+            
+            // Slide up the floating banner
+            await sleep(1200);
+            const banner = document.getElementById('failover-banner');
+            banner.classList.remove('translate-y-32', 'opacity-0');
+            banner.classList.add('translate-y-0', 'opacity-100');
+        }
+
+        // RETURN BACK TO MAIN DASHBOARD
+        async function returnToDashboard() {
+            // Dismiss banner
+            const banner = document.getElementById('failover-banner');
+            banner.classList.add('translate-y-32', 'opacity-0');
+            banner.classList.remove('translate-y-0', 'opacity-100');
+            
+            // Switch back to monitoring tab
+            switchTab('tab-mission');
+            
+            // Trigger auto scale digital twin presentation twin
+            await sleep(800);
+            appendLog("\n>> [WARNING] P1 TASK DETECTED (Q3 Pitch). CANCELLATION OVERRIDDEN.", "text-red-400 font-bold");
+            await sleep(800);
+            appendLog(">> INITIATING AI PROXY AUTO-SCALE...", "text-purple-400 font-bold fast-blinking");
             await sleep(1000);
 
             const pitch = document.getElementById('task-pitch');
@@ -444,11 +585,11 @@
 
             appendLog("[SUCCESS] Gemini Voice Container Online.", "text-emerald-400");
             await sleep(800);
-            appendAgent("\n> GitLab MCP: Extracted 'Q3_Pitch_Deck.pdf' from main.", "text-blue-400");
+            appendAgent("\nGitLab MCP: Extracted 'Q3_Pitch_Deck.pdf' from main.", "text-blue-400");
             await sleep(800);
             appendLog("[SUCCESS] GitLab context injected into Agent.", "text-emerald-400");
             await sleep(800);
-            appendLog("[SUCCESS] AI Proxy attached to Google Meet.", "text-emerald-400 font-bold");
+            appendLog("[SUCCESS] AI Proxy authenticated to Google Meet.", "text-emerald-400 font-bold");
             
             await sleep(1000);
             appendLog("\n--- FAILOVER COMPLETE ---", "text-slate-500");
@@ -462,7 +603,7 @@
         async function runLinter() {
             const consoleEl = document.getElementById('linter-console');
             
-            // Reset UI
+            // Reset Pipeline Visuals
             document.getElementById('pipe-line-1').style.width = '0%';
             document.getElementById('pipe-line-2').style.width = '0%';
             ['pipe-1', 'pipe-2', 'pipe-3'].forEach(id => {
