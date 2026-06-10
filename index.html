@@ -18,8 +18,6 @@
         .tab-active { color: #f8fafc; font-weight: 600; }
         .tab-active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: #3b82f6; border-radius: 2px 2px 0 0; }
         .tab-inactive { color: #64748b; font-weight: 500; }
-        .dropdown-content { display: none; position: absolute; right: 0; top: 100%; margin-top: 0.5rem; width: 240px; z-index: 50; }
-        .dropdown:hover .dropdown-content { display: block; }
     </style>
 </head>
 <body class="p-4 md:p-6 h-screen flex flex-col gap-4 overflow-hidden relative">
@@ -28,18 +26,18 @@
         <div>
             <h1 class="text-xl font-bold text-slate-100 flex items-center gap-2">
                 <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-                Self.SRE <span class="text-slate-550 font-medium text-sm ml-2">Bio-Ops</span>
+                Self.SRE <span class="text-slate-500 font-medium text-sm ml-2">Bio-Ops</span>
             </h1>
             <p class="text-[11px] text-slate-400 mt-1">Target Node: human_01 | <span id="sync-status" class="text-amber-500 font-bold ml-1">LOCAL UI MODE</span></p>
         </div>
         
         <div class="flex items-center gap-4">
             <div class="relative dropdown hidden lg:block">
-                <button class="flex items-center gap-2 text-xs bg-purple-500/10 text-purple-400 border border-purple-500/30 px-4 py-2 rounded-lg font-bold shadow-sm hover:bg-purple-500/20 transition-all">
+                <button onclick="toggleDropdown(event)" class="flex items-center gap-2 text-xs bg-purple-500/10 text-purple-400 border border-purple-500/30 px-4 py-2 rounded-lg font-bold shadow-sm hover:bg-purple-500/20 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     Chaos Monkey Incident
                 </button>
-                <div class="dropdown-content bg-slate-900 border border-slate-700 rounded-lg shadow-xl overflow-hidden">
+                <div id="dropdown-menu" class="hidden absolute right-0 top-full mt-2 w-60 bg-slate-900 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-50">
                     <button onclick="injectChaos('burnout')" class="w-full text-left px-4 py-3 text-xs font-bold text-rose-400 hover:bg-slate-800 border-b border-slate-800 flex justify-between">Sev-1 Burnout Spike <span>⚡</span></button>
                     <button onclick="injectChaos('linter')" class="w-full text-left px-4 py-3 text-xs font-bold text-amber-400 hover:bg-slate-800 border-b border-slate-800 flex justify-between">Context-Switch Storm <span>⚠️</span></button>
                     <button onclick="injectChaos('rest')" class="w-full text-left px-4 py-3 text-xs font-bold text-blue-400 hover:bg-slate-800 flex justify-between">SLA Sleep Breach <span>💤</span></button>
@@ -197,6 +195,23 @@
             document.getElementById(tabId.replace('tab-', 'btn-')).classList.replace('tab-inactive', 'tab-active');
         }
 
+        // === 1B. CLICK-TRIGGERED DROPDOWN ===
+        function toggleDropdown(event) {
+            event.stopPropagation();
+            const menu = document.getElementById('dropdown-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        window.addEventListener('click', function(event) {
+            const menu = document.getElementById('dropdown-menu');
+            if (menu && !menu.classList.contains('hidden')) {
+                const dropdown = document.querySelector('.dropdown');
+                if (!dropdown.contains(event.target)) {
+                    menu.classList.add('hidden');
+                }
+            }
+        });
+
         // === 2. CANVAS ECG LOGIC ===
         const canvas = document.getElementById('ecg-canvas');
         const ctx = canvas.getContext('2d');
@@ -318,6 +333,10 @@
         }
 
         async function injectChaos(type) {
+            // Close dropdown menu first
+            const menu = document.getElementById('dropdown-menu');
+            if (menu) menu.classList.add('hidden');
+            
             // Tell backend if running, otherwise UI handles it locally via gracefully degrading logic
             try { 
                 await fetch('http://localhost:5000/trigger', {
@@ -345,7 +364,7 @@
                 
                 document.getElementById('status-text').innerText = "ANOMALY";
                 document.getElementById('status-text').className = "text-xs font-bold text-rose-400 uppercase";
-                document.getElementById('status-dot').className = "w-2 h-2 bg-rose-500 rounded-full animate-pulse";
+                document.getElementById('status-dot').className = "w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse";
 
                 if(localMode) appendLog("WARN: Critical biometric spike detected. Initiating Dead Man's Switch.", "text-rose-400 font-bold");
                 
@@ -385,7 +404,7 @@
                 
                 document.getElementById('status-text').innerText = "SLA SLEEP";
                 document.getElementById('status-text').className = "text-xs font-bold text-indigo-400 uppercase";
-                document.getElementById('status-dot').className = "w-2 h-2 bg-indigo-500 rounded-full animate-pulse";
+                document.getElementById('status-dot').className = "w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse";
 
                 if (localMode) {
                     localSchedule.forEach(item => {
@@ -425,7 +444,7 @@
             document.getElementById('header-box').className = "flex justify-between items-center glass-panel p-4 md:px-6 shrink-0 border-t-2 border-t-emerald-500";
             document.getElementById('status-text').innerText = 'Operational';
             document.getElementById('status-text').className = 'text-xs font-bold text-emerald-400 tracking-wide uppercase';
-            document.getElementById('status-dot').className = 'w-2 h-2 bg-emerald-500 rounded-full animate-pulse';
+            document.getElementById('status-dot').className = 'w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse';
             
             ecgState = 'normal';
             document.getElementById('hr-val').innerText = '72 bpm';
@@ -597,7 +616,7 @@
                         document.getElementById('stress-container').className = "bg-indigo-950/20 p-3 rounded border border-indigo-500/30 transition-all duration-500";
                     } else {
                         document.getElementById('hr-label').innerText = data.telemetry.heart_rate + ' BPM (NORMAL)';
-                        document.getElementById('hr-label').className = "text-[10px] text-emerald-400 font-mono";
+                        document.getElementById('hr-label').className = "text-[10px] text-emerald-450 font-mono";
                         document.getElementById('hr-container').className = "bg-slate-800/50 p-3 rounded border border-slate-700/50 transition-all duration-500";
                         document.getElementById('stress-container').className = "bg-slate-800/50 p-3 rounded border border-slate-700/50 transition-all duration-500";
                     }
