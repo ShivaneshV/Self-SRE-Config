@@ -47,7 +47,7 @@
             </div>
 
             <div class="flex items-center gap-2.5 border border-slate-700 bg-slate-800/50 px-4 py-2 rounded-lg" id="status-container">
-                <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" id="status-dot"></div>
+                <div class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" id="status-dot"></div>
                 <span class="text-xs font-bold text-emerald-400 tracking-wide uppercase" id="status-text">Operational</span>
             </div>
         </div>
@@ -86,21 +86,8 @@
                 
                 <div class="glass-panel p-4 flex-grow flex flex-col min-h-0">
                     <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">target_schedule.json</h2>
-                    <div class="space-y-2 overflow-y-auto pr-1">
-                        <div class="bg-slate-800/40 p-3 rounded border border-slate-700/50 flex justify-between items-start transition-all" id="task-standup">
-                            <div>
-                                <p class="text-[11px] font-mono text-slate-400">10:00 AM</p>
-                                <p class="text-sm font-semibold text-slate-200 task-name">Engineering Standup</p>
-                            </div>
-                            <span class="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded schedule-badge">ACTIVE</span>
-                        </div>
-                        <div class="bg-slate-800/40 p-3 rounded border border-slate-700/50 flex justify-between items-start transition-all" id="task-pitch">
-                            <div>
-                                <p class="text-[11px] font-mono text-slate-400">01:30 PM <span class="text-rose-400 ml-1 font-bold">P1</span></p>
-                                <p class="text-sm font-semibold text-slate-200 task-name">Q3 Roadmap Pitch</p>
-                            </div>
-                            <span class="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded schedule-badge">ACTIVE</span>
-                        </div>
+                    <div class="space-y-2 overflow-y-auto pr-1" id="schedule-container-list">
+                        <!-- Commitments are dynamically rendered here -->
                     </div>
                 </div>
             </div>
@@ -111,7 +98,7 @@
                         <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Gemini Daemon & Webhook Logs</h2>
                     </div>
                     <div class="flex-grow terminal-panel m-4 p-4 font-mono text-xs text-slate-400 overflow-y-auto shadow-inner" id="log-stream">
-                        <p class="text-slate-500"># Identity Sync: GitLab MCP Connected. Waiting for events...</p>
+                        <p class="text-slate-550"># Identity Sync: GitLab MCP Connected. Waiting for events...</p>
                     </div>
 
                     <div id="action-area" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center z-10">
@@ -266,7 +253,59 @@
         }
         drawECG();
 
-        // === 3. CHAOS SCENARIOS & UI LOGIC ===
+        // === 3. SCHEDULE COMMITMENTS LOGIC ===
+        let localSchedule = [
+            { "id": "EVT-1001", "time": "10:00 AM", "task": "Engineering Standup", "priority": "P2", "status": "ACTIVE" },
+            { "id": "EVT-1002", "time": "01:30 PM", "task": "Q3 Roadmap Pitch", "priority": "P1", "status": "ACTIVE" },
+            { "id": "EVT-1003", "time": "06:00 PM", "task": "Gym / Workout", "priority": "P3", "status": "ACTIVE" }
+        ];
+
+        function renderSchedule(commitments) {
+            const list = document.getElementById('schedule-container-list');
+            list.innerHTML = ''; 
+
+            commitments.forEach(item => {
+                let badgeClass = 'text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded';
+                let cardClass = 'bg-slate-800/40 p-3 rounded border border-slate-700/50 flex justify-between items-start transition-all';
+                let nameClass = 'text-sm font-semibold text-slate-200 task-name';
+                let timeText = item.time;
+                
+                if (item.priority === 'P1') {
+                    timeText += ` <span class="text-rose-400 ml-1 font-bold">P1</span>`;
+                }
+
+                if (item.status === 'DELEGATED') {
+                    badgeClass = 'text-[9px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded';
+                    cardClass += ' opacity-40';
+                    nameClass += ' line-through';
+                } else if (item.status === 'AI PROXY LIVE') {
+                    badgeClass = 'text-[9px] font-bold text-indigo-300 bg-indigo-500/30 px-1.5 py-0.5 rounded animate-pulse';
+                    cardClass = 'bg-indigo-900/40 p-3 rounded border border-indigo-500/50 flex justify-between items-start transition-all';
+                } else if (item.status === 'CANCELLED') {
+                    badgeClass = 'text-[9px] font-bold text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded';
+                    cardClass += ' opacity-30';
+                    nameClass += ' line-through';
+                } else if (item.status === 'RESTING') {
+                    badgeClass = 'text-[9px] font-bold text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded';
+                    cardClass = 'bg-indigo-950/20 p-3 rounded border border-indigo-500/30 flex justify-between items-start transition-all';
+                }
+
+                list.innerHTML += `
+                    <div class="${cardClass}">
+                        <div>
+                            <p class="text-[11px] font-mono text-slate-400">${timeText}</p>
+                            <p class="${nameClass}">${item.task}</p>
+                        </div>
+                        <span class="${badgeClass}">${item.status}</span>
+                    </div>
+                `;
+            });
+        }
+
+        // Initialize display with default mock schedule
+        renderSchedule(localSchedule);
+
+        // === 4. CHAOS SCENARIOS & UI LOGIC ===
         const sleep = ms => new Promise(r => setTimeout(r, ms));
         let isAborted = false;
         let countdownInterval;
@@ -316,7 +355,18 @@
                     if (isAborted) return;
                     count -= 0.05;
                     document.getElementById('timer').innerText = count.toFixed(2);
-                    if (count <= 0) { clearInterval(countdownInterval); if(localMode) executeFailoverUI(); }
+                    if (count <= 0) { 
+                        clearInterval(countdownInterval); 
+                        if(localMode) {
+                            localSchedule.forEach(item => {
+                                if (item.id === "EVT-1001") item.status = "DELEGATED";
+                                if (item.id === "EVT-1002") item.status = "AI PROXY LIVE";
+                                if (item.id === "EVT-1003") item.status = "CANCELLED";
+                            });
+                            renderSchedule(localSchedule);
+                            executeFailoverUI(); 
+                        } 
+                    }
                 }, 50);
             } 
             else if(type === 'linter') {
@@ -336,10 +386,56 @@
                 document.getElementById('status-text').innerText = "SLA SLEEP";
                 document.getElementById('status-text').className = "text-xs font-bold text-indigo-400 uppercase";
                 document.getElementById('status-dot').className = "w-2 h-2 bg-indigo-500 rounded-full animate-pulse";
+
+                if (localMode) {
+                    localSchedule.forEach(item => {
+                        if (item.id === "EVT-1003") {
+                            item.task = "Mandatory Recovery Block (Rest)";
+                            item.status = "RESTING";
+                        }
+                    });
+                    renderSchedule(localSchedule);
+                }
             }
             else if(type === 'failover') {
+                if (localMode) {
+                    localSchedule.forEach(item => {
+                        if (item.id === "EVT-1001") item.status = "DELEGATED";
+                        if (item.id === "EVT-1002") item.status = "AI PROXY LIVE";
+                        if (item.id === "EVT-1003") item.status = "CANCELLED";
+                    });
+                    renderSchedule(localSchedule);
+                }
                 executeFailoverUI();
             }
+            else if(type === 'none') {
+                if (localMode) {
+                    localSchedule = [
+                        { "id": "EVT-1001", "time": "10:00 AM", "task": "Engineering Standup", "priority": "P2", "status": "ACTIVE" },
+                        { "id": "EVT-1002", "time": "01:30 PM", "task": "Q3 Roadmap Pitch", "priority": "P1", "status": "ACTIVE" },
+                        { "id": "EVT-1003", "time": "06:00 PM", "task": "Gym / Workout", "priority": "P3", "status": "ACTIVE" }
+                    ];
+                    renderSchedule(localSchedule);
+                }
+                resetDashboardStyles();
+            }
+        }
+
+        function resetDashboardStyles() {
+            document.getElementById('header-box').className = "flex justify-between items-center glass-panel p-4 md:px-6 shrink-0 border-t-2 border-t-emerald-500";
+            document.getElementById('status-text').innerText = 'Operational';
+            document.getElementById('status-text').className = 'text-xs font-bold text-emerald-400 tracking-wide uppercase';
+            document.getElementById('status-dot').className = 'w-2 h-2 bg-emerald-500 rounded-full animate-pulse';
+            
+            ecgState = 'normal';
+            document.getElementById('hr-val').innerText = '72 bpm';
+            document.getElementById('hr-val').className = "text-xl font-bold font-mono text-slate-100";
+            document.getElementById('stress-val').innerText = '42%';
+            document.getElementById('stress-val').className = "text-xl font-bold font-mono text-slate-100";
+            document.getElementById('hr-label').innerText = '72 BPM (NORMAL)';
+            document.getElementById('hr-label').className = "text-[10px] text-emerald-400 font-mono";
+
+            document.getElementById('action-area').classList.add('hidden');
         }
 
         function abortFailover() {
@@ -356,20 +452,6 @@
             document.getElementById('status-text').innerText = 'SEV-1 OUTAGE';
             document.getElementById('status-text').className = 'text-xs font-bold text-rose-400 tracking-wide uppercase';
             document.getElementById('status-dot').className = 'w-2 h-2 bg-rose-500 rounded-full animate-pulse';
-            
-            // Delegate
-            const standup = document.getElementById('task-standup');
-            standup.classList.add('opacity-40');
-            standup.querySelector('.task-name').style.textDecoration = 'line-through';
-            standup.querySelector('.schedule-badge').innerText = 'DELEGATED';
-            standup.querySelector('.schedule-badge').className = 'text-[9px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded';
-            
-            // AI Twin
-            const pitch = document.getElementById('task-pitch');
-            pitch.classList.replace('bg-slate-800/40', 'bg-indigo-900/40');
-            pitch.classList.replace('border-slate-700/50', 'border-indigo-500/50');
-            pitch.querySelector('.schedule-badge').innerText = 'AI PROXY LIVE';
-            pitch.querySelector('.schedule-badge').className = 'text-[9px] font-bold text-indigo-300 bg-indigo-500/30 px-1.5 py-0.5 rounded animate-pulse';
 
             await sleep(1500);
             document.getElementById('postmortem-modal').classList.remove('hidden');
@@ -392,9 +474,10 @@
             if(localMode) appendLog(">> GitLab Bio-Linter Pipeline Failed.", "text-rose-400 font-bold");
         }
 
-        // === 4. REAL-TIME SERVER POLLING ===
+        // === 5. REAL-TIME SERVER POLLING ===
         let localMode = false;
         let lastLogCount = 0;
+        let lastScheduleJson = '';
         
         async function pollServer() {
             try {
@@ -409,11 +492,19 @@
                 // Sync Logs
                 if (data.logs && data.logs.length > lastLogCount) {
                     for(let i = lastLogCount; i < data.logs.length; i++) {
-                        // Strip ANSI codes if any snuck through from python stdout
                         let logText = data.logs[i].replace(/\x1B\[[0-9;]*[mK]/g, "");
                         appendLog(logText, "text-slate-300");
                     }
                     lastLogCount = data.logs.length;
+                }
+
+                // Sync Schedule
+                if (data.schedule) {
+                    let scheduleJson = JSON.stringify(data.schedule);
+                    if (scheduleJson !== lastScheduleJson) {
+                        renderSchedule(data.schedule);
+                        lastScheduleJson = scheduleJson;
+                    }
                 }
 
                 // Sync State Changes

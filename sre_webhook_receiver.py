@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_from_directory
 import time
 import sys
 import logging
+import json
 
 # Ensure terminal output supports Unicode (emojis) on all platforms, including Windows
 try:
@@ -26,7 +27,8 @@ CORS(app) # Allow local UI to poll this server
 system_state = {
     "status": "OPERATIONAL",
     "scenario": "none",
-    "logs": ["[INFO] SRE Webhook listener active on Port 5000.", "[INFO] Awaiting Chaos Monkey triggers..."]
+    "logs": ["[INFO] SRE Webhook listener active on Port 5000.", "[INFO] Awaiting Chaos Monkey triggers..."],
+    "schedule": []
 }
 
 class Colors:
@@ -38,6 +40,14 @@ def log_event(text, color=Colors.CYAN):
     sys.stdout.flush()
     # Save to state for the UI to fetch
     system_state["logs"].append(text)
+
+def load_schedule():
+    try:
+        with open('schedule.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            system_state["schedule"] = data.get('commitments', [])
+    except Exception as e:
+        print(f"Error loading schedule.json: {e}", flush=True)
 
 @app.route('/')
 def serve_dashboard():
@@ -54,6 +64,9 @@ def handle_chaos():
     scenario = data.get('scenario', 'none')
     system_state["scenario"] = scenario
     
+    # Reload schedule to clear previous scenario modifications
+    load_schedule()
+    
     print("\n" + Colors.YELLOW + "="*60 + Colors.RESET, flush=True)
     log_event(f"[CHAOS MONKEY] INJECTING SCENARIO: {scenario.upper()}", Colors.PURPLE)
     
@@ -68,6 +81,12 @@ def handle_chaos():
         system_state["status"] = "SLA_BREACH"
         log_event(">> SLA Breach: Sleep Debt exceeds threshold (4.5h).", Colors.YELLOW)
         log_event(">> Auto-generating Merge Request for mandatory REST block.", Colors.CYAN)
+        
+        # Modify schedule: change gym or evening tasks to Rest
+        for item in system_state["schedule"]:
+            if item["id"] == "EVT-1003":
+                item["task"] = "Mandatory Recovery Block (Rest)"
+                item["status"] = "RESTING"
         
     print(Colors.YELLOW + "="*60 + Colors.RESET + "\n", flush=True)
     return jsonify({"status": "scenario_injected"}), 200
@@ -93,6 +112,15 @@ def gitlab_webhook():
         log_event("[WARNING] P1 Task Detected. Executing AI Proxy Auto-Scale...", Colors.PURPLE)
         log_event("[SUCCESS] Gemini Digital Twin spun up and attached to Google Meet.", Colors.GREEN)
         
+        # Modify schedule to match recovery state
+        for item in system_state["schedule"]:
+            if item["id"] == "EVT-1001":
+                item["status"] = "DELEGATED"
+            elif item["id"] == "EVT-1002":
+                item["status"] = "AI PROXY LIVE"
+            elif item["id"] == "EVT-1003":
+                item["status"] = "CANCELLED"
+                
         print("\n" + Colors.BOLD + Colors.CYAN + "[+] FAILOVER COMPLETE. BLAMELESS POSTMORTEM GENERATED." + Colors.RESET + "\n", flush=True)
         return jsonify({"status": "failover_executed"}), 200
 
@@ -101,5 +129,9 @@ def gitlab_webhook():
 if __name__ == '__main__':
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
+    
+    # Load commitments from schedule.json
+    load_schedule()
+    
     print(Colors.BOLD + Colors.CYAN + "Self.SRE Webhook & API Receiver Active [Port 5000]..." + Colors.RESET, flush=True)
     app.run(port=5000)
