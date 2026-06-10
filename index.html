@@ -66,18 +66,18 @@
                 <div class="glass-panel p-4">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Live Telemetry</h2>
-                        <span class="text-[10px] text-emerald-400 font-mono" id="hr-label">72 BPM (NORMAL)</span>
+                        <span class="text-[10px] text-emerald-400 font-mono animate-pulse" id="hr-label">72 BPM (NORMAL)</span>
                     </div>
                     <div class="bg-[#020617] border border-slate-800 rounded-lg h-20 w-full relative overflow-hidden mb-4">
                         <canvas id="ecg-canvas" class="absolute inset-0 w-full h-full"></canvas>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-slate-800/50 p-3 rounded border border-slate-700/50">
+                        <div class="bg-slate-800/50 p-3 rounded border border-slate-700/50" id="hr-container">
                             <p class="text-xs text-slate-400 font-medium">Heart Rate</p>
                             <p class="text-xl font-bold font-mono text-slate-100" id="hr-val">72 bpm</p>
                         </div>
-                        <div class="bg-slate-800/50 p-3 rounded border border-slate-700/50">
+                        <div class="bg-slate-800/50 p-3 rounded border border-slate-700/50" id="stress-container">
                             <p class="text-xs text-slate-400 font-medium">Stress Index</p>
                             <p class="text-xl font-bold font-mono text-slate-100" id="stress-val">42%</p>
                         </div>
@@ -425,7 +425,7 @@
             document.getElementById('header-box').className = "flex justify-between items-center glass-panel p-4 md:px-6 shrink-0 border-t-2 border-t-emerald-500";
             document.getElementById('status-text').innerText = 'Operational';
             document.getElementById('status-text').className = 'text-xs font-bold text-emerald-400 tracking-wide uppercase';
-            document.getElementById('status-dot').className = 'w-2 h-2 bg-emerald-500 rounded-full animate-pulse';
+            document.getElementById('status-dot').className = 'w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse';
             
             ecgState = 'normal';
             document.getElementById('hr-val').innerText = '72 bpm';
@@ -438,20 +438,33 @@
             document.getElementById('action-area').classList.add('hidden');
         }
 
-        function abortFailover() {
+        async function abortFailover() {
             isAborted = true;
             clearInterval(countdownInterval);
             document.getElementById('action-area').classList.add('hidden');
-            if(localMode) appendLog("ABORT: Human override acknowledged.", "text-emerald-400");
+            
+            // Abort on server
+            try { 
+                await fetch('http://localhost:5000/trigger', {
+                    method: 'POST', 
+                    headers: {'Content-Type':'application/json'}, 
+                    body: JSON.stringify({scenario: 'none'})
+                }); 
+            } catch(e){}
+            
+            if(localMode) {
+                appendLog("ABORT: Human override acknowledged.", "text-emerald-400");
+                handleStateChange('none');
+            }
         }
 
         async function executeFailoverUI() {
             document.getElementById('action-area').classList.add('hidden');
             
-            document.getElementById('header-box').classList.replace('border-t-emerald-500', 'border-t-rose-500');
+            document.getElementById('header-box').className = "flex justify-between items-center glass-panel p-4 md:px-6 shrink-0 border-t-2 border-t-rose-500";
             document.getElementById('status-text').innerText = 'SEV-1 OUTAGE';
-            document.getElementById('status-text').className = 'text-xs font-bold text-rose-400 tracking-wide uppercase';
-            document.getElementById('status-dot').className = 'w-2 h-2 bg-rose-500 rounded-full animate-pulse';
+            document.getElementById('status-text').className = 'text-xs font-bold text-rose-400 tracking-wide uppercase glow-red';
+            document.getElementById('status-dot').className = 'w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse shadow-[0_0_10px_#ef4444]';
 
             await sleep(1500);
             document.getElementById('postmortem-modal').classList.remove('hidden');
@@ -504,6 +517,64 @@
                     if (scheduleJson !== lastScheduleJson) {
                         renderSchedule(data.schedule);
                         lastScheduleJson = scheduleJson;
+                    }
+                }
+
+                // Sync Telemetry Metrics
+                if (data.telemetry) {
+                    document.getElementById('hr-val').innerText = data.telemetry.heart_rate + ' bpm';
+                    document.getElementById('stress-val').innerText = data.telemetry.stress_index + '%';
+                    
+                    if (data.status === 'ANOMALY') {
+                        document.getElementById('hr-label').innerText = data.telemetry.heart_rate + ' BPM (TACHYCARDIA)';
+                        document.getElementById('hr-label').className = "text-[10px] font-mono text-rose-400 animate-pulse";
+                        document.getElementById('hr-container').className = "bg-rose-500/10 p-3 rounded border border-rose-500/40 transition-all duration-500";
+                        document.getElementById('stress-container').className = "bg-rose-500/10 p-3 rounded border border-rose-500/40 transition-all duration-500";
+                    } else if (data.status === 'SLA_BREACH') {
+                        document.getElementById('hr-label').innerText = data.telemetry.heart_rate + ' BPM (RECOVERY)';
+                        document.getElementById('hr-label').className = "text-[10px] font-mono text-indigo-400";
+                        document.getElementById('hr-container').className = "bg-indigo-950/20 p-3 rounded border border-indigo-500/30 transition-all duration-500";
+                        document.getElementById('stress-container').className = "bg-indigo-950/20 p-3 rounded border border-indigo-500/30 transition-all duration-500";
+                    } else if (data.status === 'SEV-1 OUTAGE') {
+                        document.getElementById('hr-label').innerText = 'OFFLINE / RECOVERY';
+                        document.getElementById('hr-label').className = "text-[10px] font-mono text-indigo-400";
+                        document.getElementById('hr-container').className = "bg-indigo-950/20 p-3 rounded border border-indigo-500/30 transition-all duration-500";
+                        document.getElementById('stress-container').className = "bg-indigo-950/20 p-3 rounded border border-indigo-500/30 transition-all duration-500";
+                    } else {
+                        document.getElementById('hr-label').innerText = data.telemetry.heart_rate + ' BPM (NORMAL)';
+                        document.getElementById('hr-label').className = "text-[10px] text-emerald-400 font-mono";
+                        document.getElementById('hr-container').className = "bg-slate-800/50 p-3 rounded border border-slate-700/50 transition-all duration-500";
+                        document.getElementById('stress-container').className = "bg-slate-800/50 p-3 rounded border border-slate-700/50 transition-all duration-500";
+                    }
+                }
+
+                // Sync Status Badge Styles
+                const statusText = document.getElementById('status-text');
+                const statusDot = document.getElementById('status-dot');
+                const headerBox = document.getElementById('header-box');
+                
+                if (data.status !== statusText.innerText) {
+                    statusText.innerText = data.status;
+                    if (data.status === 'OPERATIONAL') {
+                        headerBox.className = "flex justify-between items-center glass-panel p-4 md:px-6 shrink-0 border-t-2 border-t-emerald-500";
+                        statusText.className = "text-xs font-bold text-emerald-400 tracking-wide uppercase";
+                        statusDot.className = "w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse";
+                    } else if (data.status === 'ANOMALY') {
+                        headerBox.className = "flex justify-between items-center glass-panel p-4 md:px-6 shrink-0 border-t-2 border-t-rose-500";
+                        statusText.className = "text-xs font-bold text-rose-400 tracking-wide uppercase animate-pulse";
+                        statusDot.className = "w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse";
+                    } else if (data.status === 'LINTER_FAIL') {
+                        headerBox.className = "flex justify-between items-center glass-panel p-4 md:px-6 shrink-0 border-t-2 border-t-amber-500";
+                        statusText.className = "text-xs font-bold text-amber-400 tracking-wide uppercase";
+                        statusDot.className = "w-2.5 h-2.5 bg-amber-500 rounded-full animate-pulse";
+                    } else if (data.status === 'SLA_BREACH') {
+                        headerBox.className = "flex justify-between items-center glass-panel p-4 md:px-6 shrink-0 border-t-2 border-t-indigo-500";
+                        statusText.className = "text-xs font-bold text-indigo-400 tracking-wide uppercase";
+                        statusDot.className = "w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse";
+                    } else if (data.status === 'SEV-1 OUTAGE') {
+                        headerBox.className = "flex justify-between items-center glass-panel p-4 md:px-6 shrink-0 border-t-2 border-t-rose-500 bg-rose-950/10";
+                        statusText.className = "text-xs font-bold text-rose-400 tracking-wide uppercase glow-red animate-pulse";
+                        statusDot.className = "w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse shadow-[0_0_10px_#ef4444]";
                     }
                 }
 

@@ -28,7 +28,12 @@ system_state = {
     "status": "OPERATIONAL",
     "scenario": "none",
     "logs": ["[INFO] SRE Webhook listener active on Port 5000.", "[INFO] Awaiting Chaos Monkey triggers..."],
-    "schedule": []
+    "schedule": [],
+    "telemetry": {
+        "heart_rate": 72,
+        "stress_index": 42,
+        "sleep_level": 84
+    }
 }
 
 class Colors:
@@ -70,15 +75,26 @@ def handle_chaos():
     print("\n" + Colors.YELLOW + "="*60 + Colors.RESET, flush=True)
     log_event(f"[CHAOS MONKEY] INJECTING SCENARIO: {scenario.upper()}", Colors.PURPLE)
     
-    if scenario == 'burnout':
+    if scenario == 'none':
+        system_state["status"] = "OPERATIONAL"
+        system_state["telemetry"]["heart_rate"] = 72
+        system_state["telemetry"]["stress_index"] = 42
+        log_event(">> Human override acknowledged. Standing down.", Colors.GREEN)
+    elif scenario == 'burnout':
         system_state["status"] = "ANOMALY"
+        system_state["telemetry"]["heart_rate"] = 154
+        system_state["telemetry"]["stress_index"] = 99
         log_event(">> Telemetry spiked. Dead Man's Switch armed.", Colors.RED)
     elif scenario == 'linter':
         system_state["status"] = "LINTER_FAIL"
+        system_state["telemetry"]["heart_rate"] = 88
+        system_state["telemetry"]["stress_index"] = 75
         log_event(">> GitLab Bio-Linter pipeline triggered via API.", Colors.YELLOW)
         log_event(">> FATAL: Cognitive Overload detected in schedule.json", Colors.RED)
     elif scenario == 'rest':
         system_state["status"] = "SLA_BREACH"
+        system_state["telemetry"]["heart_rate"] = 55
+        system_state["telemetry"]["stress_index"] = 12
         log_event(">> SLA Breach: Sleep Debt exceeds threshold (4.5h).", Colors.YELLOW)
         log_event(">> Auto-generating Merge Request for mandatory REST block.", Colors.CYAN)
         
@@ -98,6 +114,8 @@ def gitlab_webhook():
         
         system_state["status"] = "SEV-1 OUTAGE"
         system_state["scenario"] = "failover"
+        system_state["telemetry"]["heart_rate"] = 60
+        system_state["telemetry"]["stress_index"] = 15
         
         print("\n" + Colors.YELLOW + "="*60 + Colors.RESET, flush=True)
         log_event("[!] CRITICAL ALERT: HUMAN NODE FAILURE ACKNOWLEDGED", Colors.RED)
