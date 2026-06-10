@@ -1,0 +1,36 @@
+{
+  "system_metadata": {
+    "target_entity": "Human_User_01",
+    "operational_status": "HEALTHY",
+    "last_health_check": "2026-06-10T08:00:00Z"
+  },
+  "commitments": [
+    {
+      "id": "EVT-1001",
+      "time": "10:00 AM",
+      "task": "Engineering Daily Standup",
+      "priority": "P2",
+      "status": "ACTIVE",
+      "fallback_delegate": "sarah.dev@company.com",
+      "auto_reply_template": "I am experiencing an unexpected life-server outage. Sarah will cover my updates."
+    },
+    {
+      "id": "EVT-1002",
+      "time": "01:30 PM",
+      "task": "Q3 Roadmap Pitch to Client",
+      "priority": "P1",
+      "status": "ACTIVE",
+      "fallback_delegate": "manager@company.com",
+      "auto_reply_template": "URGENT: Experiencing SEV-1 personal disruption. Must reschedule Q3 pitch to tomorrow. Apologies for the inconvenience."
+    },
+    {
+      "id": "EVT-1003",
+      "time": "06:00 PM",
+      "task": "Gym / Workout",
+      "priority": "P3",
+      "status": "ACTIVE",
+      "fallback_delegate": "none",
+      "auto_reply_template": "none"
+    }
+  ]
+}

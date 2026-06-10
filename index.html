@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self.SRE | Human DevOps</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0d1117; color: #c9d1d9; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+        .monitor-box { background-color: #161b22; border: 1px solid #30363d; border-radius: 8px; }
+        .blinking { animation: blinker 1.5s linear infinite; }
+        .fast-blinking { animation: blinker 0.5s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
+        .glow-green { text-shadow: 0 0 10px rgba(63, 185, 80, 0.8); }
+        .glow-red { text-shadow: 0 0 10px rgba(248, 81, 73, 0.8); }
+        .glow-purple { text-shadow: 0 0 15px rgba(168, 85, 247, 0.9); }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0d1117; }
+        ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+        .tab-active { border-bottom: 2px solid #58a6ff; color: #58a6ff; background-color: #1f242c; }
+        .tab-inactive { color: #8b949e; border-bottom: 2px solid transparent; }
+        .tab-inactive:hover { color: #c9d1d9; background-color: #161b22; }
+    </style>
+</head>
+<body class="p-6 h-screen flex flex-col gap-4 overflow-hidden relative">
+
+    <header class="flex justify-between items-center monitor-box p-4 shadow-lg border-t-4 border-t-green-500 transition-colors duration-500 shrink-0" id="header-box">
+        <div class="flex items-center gap-6">
+            <div>
+                <h1 class="text-2xl font-bold text-blue-400">> Self.SRE <span class="text-gray-500 text-lg">// Operations</span></h1>
+                <p class="text-sm text-gray-400 mt-1">Target Node: Human_User_01 | GitLab MCP: Connected</p>
+            </div>
+            <button id="anomaly-btn" class="hidden lg:block text-xs bg-red-900/20 text-red-500 border border-red-900 px-3 py-1 rounded hover:bg-red-900 hover:text-white transition-colors duration-300 shadow-[0_0_10px_rgba(248,81,73,0.2)]">
+                ⚠️ INJECT BIO-ANOMALY
+            </button>
+        </div>
+        <div class="flex items-center gap-3 border border-green-900 bg-green-900/20 px-4 py-2 rounded transition-colors duration-500" id="status-container">
+            <span class="text-xl font-bold text-green-500 glow-green" id="status-text">STATUS: OPERATIONAL</span>
+            <div class="w-4 h-4 bg-green-500 rounded-full blinking shadow-[0_0_10px_#3fb950]" id="status-dot"></div>
+        </div>
+    </header>
+
+    <div class="flex monitor-box px-2 pt-2 shrink-0 border-b border-gray-700">
+        <button onclick="switchTab('tab-mission')" id="btn-mission" class="px-6 py-2 font-bold text-sm tab-active rounded-t-md transition-colors">
+            [01] LIVE MISSION CONTROL
+        </button>
+        <button onclick="switchTab('tab-cicd')" id="btn-cicd" class="px-6 py-2 font-bold text-sm tab-inactive rounded-t-md transition-colors flex items-center gap-2">
+            [02] CI/CD BIO-PIPELINE <span class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full blinking">FAILED</span>
+        </button>
+        <button onclick="switchTab('tab-docs')" id="btn-docs" class="px-6 py-2 font-bold text-sm tab-inactive rounded-t-md transition-colors">
+            [03] INSTRUCTIONS & DOCS
+        </button>
+    </div>
+
+    <div class="flex-grow overflow-hidden relative">
+
+        <div id="tab-mission" class="h-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <div class="col-span-1 flex flex-col gap-6 overflow-y-auto pr-2">
+                <div class="monitor-box p-4">
+                    <h2 class="text-cyan-400 border-b border-gray-700 pb-2 mb-4 font-bold">>> Biosensor Telemetry (Active)</h2>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div class="bg-gray-900 p-3 rounded border border-gray-800 transition-colors duration-500" id="hr-box">
+                            <p class="text-gray-500 mb-1">Heart Rate</p>
+                            <p class="text-xl text-green-400 font-bold transition-all" id="hr-val">72 bpm</p>
+                        </div>
+                        <div class="bg-gray-900 p-3 rounded border border-gray-800 transition-colors duration-500" id="stress-box">
+                            <p class="text-gray-500 mb-1">Stress Index</p>
+                            <p class="text-xl text-yellow-400 font-bold transition-all" id="stress-val">42%</p>
+                        </div>
+                        <div class="bg-gray-900 p-3 rounded border border-gray-800">
+                            <p class="text-gray-500 mb-1">Sleep Level</p>
+                            <p class="text-xl text-cyan-400 font-bold" id="sleep-val">84%</p>
+                        </div>
+                        <div class="bg-gray-900 p-3 rounded border border-gray-800">
+                            <p class="text-gray-500 mb-1">Cognitive Fatigue</p>
+                            <p class="text-xl text-green-400 font-bold" id="fatigue-val">Minimal</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="monitor-box p-4 flex-grow flex flex-col min-h-0">
+                    <h2 class="text-cyan-400 border-b border-gray-700 pb-2 mb-4 font-bold shrink-0">>> schedule.json (Target Node)</h2>
+                    <div class="space-y-3 overflow-y-auto pr-2">
+                        <div class="bg-gray-900 p-3 rounded border border-gray-700 flex justify-between items-center transition-all duration-500 relative" id="task-standup">
+                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-gray-600 rounded-l transition-colors duration-500 bar-accent"></div>
+                            <div class="pl-2">
+                                <p class="text-xs text-gray-500">10:00 AM</p>
+                                <p class="text-gray-200 font-bold task-name">Engineering Daily Standup</p>
+                                <p class="text-xs text-gray-500 mt-1">Priority: P2 | Delegate: sarah@company.com</p>
+                            </div>
+                            <span class="text-xs text-green-400 border border-green-800 bg-green-900/30 px-2 py-1 rounded schedule-badge transition-colors duration-500">ACTIVE</span>
+                        </div>
+                        <div class="bg-gray-900 p-3 rounded border border-gray-700 flex justify-between items-center transition-all duration-500 relative" id="task-pitch">
+                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-gray-600 rounded-l transition-colors duration-500 bar-accent"></div>
+                            <div class="pl-2">
+                                <p class="text-xs text-gray-500">01:30 PM</p>
+                                <p class="text-gray-200 font-bold task-name">Q3 Roadmap Pitch to Client</p>
+                                <p class="text-xs text-cyan-500 mt-1">Priority: P1 | AI Auto-Scale: Enabled</p>
+                            </div>
+                            <span class="text-xs text-green-400 border border-green-800 bg-green-900/30 px-2 py-1 rounded schedule-badge transition-colors duration-500">ACTIVE</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-span-1 monitor-box p-4 flex flex-col border-t-4 border-t-cyan-500 relative min-h-0">
+                <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-4 shrink-0">
+                    <h2 class="text-cyan-400 font-bold">>> Gemini SRE Daemon</h2>
+                    <span class="text-xs text-cyan-500 font-bold" id="input-status">MONITORING</span>
+                </div>
+                
+                <div class="flex-grow bg-[#0a0a0a] rounded border border-gray-800 p-4 text-sm text-gray-400 overflow-y-auto mb-4 font-mono" id="agent-console">
+                    <p class="mb-2 text-gray-500">// Gemini 1.5 Pro Daemon Online.</p>
+                    <p class="mb-4 text-gray-500">// Connected to GitLab MCP: repository 'Self-SRE-Config'</p>
+                    <p>Daemon is actively monitoring biological telemetry. Will execute autonomous failover if critical anomalies are detected.</p>
+                </div>
+
+                <div id="action-area" class="hidden w-full mb-4 flex flex-col gap-2">
+                    <div class="text-center text-red-500 font-bold text-xl fast-blinking mb-2">AUTONOMOUS FAILOVER IN: <span id="timer">5</span></div>
+                    <button id="abort-btn" class="py-2 bg-gray-800 border border-gray-600 hover:bg-gray-700 text-gray-300 font-bold rounded transition-all duration-300" onclick="abortFailover()">
+                        [ OVERRIDE / ABORT ]
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-span-1 monitor-box p-4 flex flex-col min-h-0 relative">
+                <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-4 shrink-0">
+                    <h2 class="text-cyan-400 font-bold">>> SRE Webhook Log Stream</h2>
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 bg-green-500 rounded-full" id="webhook-dot"></div>
+                        <span class="text-xs text-green-500" id="webhook-text">Port 5000 LINKED</span>
+                    </div>
+                </div>
+                <div class="flex-grow bg-[#0a0a0a] rounded border border-gray-800 p-4 font-mono text-xs text-gray-400 overflow-y-auto" id="log-stream">
+                    <p>[INFO] Awaiting GitLab signals...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-cicd" class="h-full hidden flex flex-col gap-4">
+            <div class="monitor-box p-8 h-full overflow-y-auto border-t-4 border-t-purple-500">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-purple-400">GitLab CI/CD: Biological Limits Linter</h2>
+                    <button onclick="runLinter()" class="bg-purple-900/30 text-purple-400 border border-purple-800 hover:bg-purple-900 hover:text-white px-4 py-2 rounded font-bold transition-colors text-sm shadow-[0_0_10px_rgba(168,85,247,0.2)]">
+                        ▶ RERUN BIO-LINTER
+                    </button>
+                </div>
+                
+                <p class="text-gray-400 mb-10 border-b border-gray-800 pb-4">
+                    Before the human begins their day, Self.SRE uses the GitLab MCP to run a "Linter" on their <code class="text-blue-300 bg-gray-800 px-1 rounded">schedule.json</code> codebase. If the AI detects cognitive overload (e.g., back-to-back meetings with no lunch break), it <strong class="text-red-400">FAILS THE BUILD</strong> and prevents the schedule from deploying to your calendar.
+                </p>
+
+                <div class="flex items-center justify-between mb-10 px-10">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-green-900/40 border-2 border-green-500 rounded-full flex items-center justify-center mx-auto mb-2 text-green-500 font-bold" id="pipe-1">✓</div>
+                        <p class="text-xs text-gray-500 font-bold">PARSE JSON</p>
+                    </div>
+                    <div class="h-1 flex-grow bg-gray-700 mx-4 relative"><div class="absolute top-0 left-0 h-full w-full bg-green-500 transition-all duration-1000" id="pipe-line-1"></div></div>
+                    
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-green-900/40 border-2 border-green-500 rounded-full flex items-center justify-center mx-auto mb-2 text-green-500 font-bold" id="pipe-2">✓</div>
+                        <p class="text-xs text-gray-500 font-bold">SYNTAX CHECK</p>
+                    </div>
+                    <div class="h-1 flex-grow bg-gray-700 mx-4 relative"><div class="absolute top-0 left-0 h-full w-1/2 bg-green-500 transition-all duration-1000" id="pipe-line-2"></div></div>
+                    
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-red-900/40 border-2 border-red-500 rounded-full flex items-center justify-center mx-auto mb-2 text-red-500 font-bold fast-blinking shadow-[0_0_15px_rgba(248,81,73,0.4)]" id="pipe-3">✕</div>
+                        <p class="text-xs text-gray-200 font-bold text-red-400" id="pipe-text-3">GEMINI BIO-LINTER</p>
+                    </div>
+                    <div class="h-1 flex-grow bg-gray-800 mx-4 relative"></div>
+                    
+                    <div class="text-center opacity-40">
+                        <div class="w-12 h-12 bg-gray-800 border-2 border-gray-600 rounded-full flex items-center justify-center mx-auto mb-2 text-gray-500 font-bold">▶</div>
+                        <p class="text-xs text-gray-500 font-bold">DEPLOY DAY</p>
+                    </div>
+                </div>
+
+                <div class="bg-[#0a0a0a] border border-gray-800 rounded p-6 font-mono text-sm text-gray-400 h-64 overflow-y-auto" id="linter-console">
+                    <p class="text-blue-400">$ gemini-sre run bio-linter ./schedule.json</p>
+                    <p class="mt-2 text-gray-500">Scanning schedule for human biological compliance...</p>
+                    <p class="mt-1">Task 1: 08:00 AM - Strategy Review <span class="text-green-500">[OK]</span></p>
+                    <p class="mt-1">Task 2: 10:00 AM - Engineering Standup <span class="text-green-500">[OK]</span></p>
+                    <p class="mt-1">Task 3: 11:30 AM - Marketing Sync <span class="text-green-500">[OK]</span></p>
+                    <p class="mt-1">Task 4: 01:00 PM - Deep Work Sprint <span class="text-yellow-500">[WARN: Context Switch]</span></p>
+                    <p class="mt-1 text-red-500 font-bold">Task 5: 03:00 PM - Board Meeting [FATAL ERROR]</p>
+                    <br>
+                    <p class="text-red-400">-----------------------------------------------------</p>
+                    <p class="text-red-500 font-bold">LINTER EXCEPTION: COGNITIVE OVERLOAD DETECTED</p>
+                    <p class="text-red-400">-----------------------------------------------------</p>
+                    <p class="mt-2 text-gray-300">Reason: Gemini Agent detected 7 hours of continuous high-priority compute tasks with NO REST BLOCKS.</p>
+                    <p class="text-gray-300">Recommendation: Insert a minimum 45-minute [ LUNCH / REBOOT ] block before 01:00 PM.</p>
+                    <p class="mt-4 text-red-500 font-bold blinking">Pipeline Failed. Merge Request denied by Self.SRE. Human deployment halted.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-docs" class="h-full hidden">
+            <div class="monitor-box p-10 h-full overflow-y-auto text-gray-300 leading-relaxed border-t-4 border-t-gray-500">
+                <h2 class="text-3xl font-bold text-blue-400 mb-6">Operations Manual: Self.SRE</h2>
+                
+                <h3 class="text-xl text-white font-bold border-b border-gray-700 pb-2 mb-4 mt-8">1. What is this?</h3>
+                <p class="mb-6 text-gray-400">
+                    If a production server crashes, DevOps pipelines (like GitLab CI/CD) automatically reroute traffic and trigger failovers. 
+                    But when a human crashes—due to illness, a panic attack, or severe burnout—our daily lives devolve into chaos. 
+                    <strong>Self.SRE</strong> applies Enterprise DevOps to human biology. We treat the human as a "Target Node", monitor their telemetry, and use the Google Cloud Agent Builder + GitLab MCP to autonomously execute physical schedule failovers.
+                </p>
+
+                <h3 class="text-xl text-white font-bold border-b border-gray-700 pb-2 mb-4">2. How to Test The Interactive Demo</h3>
+                <div class="bg-[#0a0a0a] border border-gray-800 p-6 rounded space-y-4 text-sm text-gray-300 shadow-inner">
+                    <div>
+                        <strong class="text-purple-400 block mb-1">Step A: The CI/CD Bio-Linter</strong>
+                        Navigate to the <strong>[02] CI/CD BIO-PIPELINE</strong> tab. Click <code>▶ RERUN BIO-LINTER</code>. Watch as the AI parses your daily schedule exactly like a software linter, failing the pipeline if it detects cognitive overload (e.g., missing your lunch break).
+                    </div>
+                    <div class="border-t border-gray-800 pt-4">
+                        <strong class="text-cyan-400 block mb-1">Step B: The Dead Man's Switch</strong>
+                        Go to the <strong>[01] LIVE MISSION CONTROL</strong> tab. Click the red <code class="bg-red-900/30 text-red-400 px-1 rounded border border-red-800">⚠️ INJECT BIO-ANOMALY</code> button in the top right. <strong>Do not touch your keyboard.</strong> The Gemini Daemon will detect the biometric spike (heart rate/stress), realize you are incapacitated, and trigger an autonomous 5-second countdown.
+                    </div>
+                    <div class="border-t border-gray-800 pt-4">
+                        <strong class="text-green-400 block mb-1">Step C: The Digital Twin (Auto-Scaling)</strong>
+                        Watch the failover execute. Low-priority tasks are cancelled. However, for the high-priority Q3 Pitch, the AI overrides the cancellation, pulls your slide deck from the GitLab repo, and spins up an <em>AI Proxy (Digital Twin)</em> to handle the meeting for you.
+                    </div>
+                </div>
+
+                <h3 class="text-xl text-white font-bold border-b border-gray-700 pb-2 mb-4 mt-8">3. The GitLab Partner Integration</h3>
+                <p class="mb-6 text-gray-400">
+                    This project was built specifically for the <strong>GitLab Partner Track</strong>. The AI does not just chat. It executes JSON-RPC tools against the GitLab MCP Server to read the raw <code class="bg-gray-800 px-1 rounded">schedule.json</code> file, autonomously branch the repo, and utilize GitLab CI/CD concepts to Lint biological schedules (See Tab 2).
+                </p>
+                
+                <div class="bg-blue-900/20 border border-blue-800 p-4 rounded text-sm text-blue-300">
+                    <strong>Note for Judges:</strong> This entire UI is a self-contained simulation of our backend to guarantee 100% uptime for judging evaluation. Please refer to our demo video to see the live integration executing real Git commits.
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // TAB SWITCHING LOGIC
+        function switchTab(tabId) {
+            document.getElementById('tab-mission').classList.add('hidden');
+            document.getElementById('tab-cicd').classList.add('hidden');
+            document.getElementById('tab-docs').classList.add('hidden');
+            
+            document.getElementById('btn-mission').className = "px-6 py-2 font-bold text-sm tab-inactive rounded-t-md transition-colors";
+            document.getElementById('btn-cicd').className = "px-6 py-2 font-bold text-sm tab-inactive rounded-t-md transition-colors flex items-center gap-2";
+            document.getElementById('btn-docs').className = "px-6 py-2 font-bold text-sm tab-inactive rounded-t-md transition-colors";
+            
+            document.getElementById(tabId).classList.remove('hidden');
+            
+            const btnId = tabId.replace('tab-', 'btn-');
+            let extraClasses = tabId === 'tab-cicd' ? " flex items-center gap-2" : "";
+            document.getElementById(btnId).className = "px-6 py-2 font-bold text-sm tab-active rounded-t-md transition-colors" + extraClasses;
+        }
+
+        // MISSION CONTROL LOGIC (Dead Man's Switch & Digital Twin)
+        const anomalyBtn = document.getElementById('anomaly-btn');
+        const agentConsole = document.getElementById('agent-console');
+        const logStream = document.getElementById('log-stream');
+        let countdownInterval;
+        let isAborted = false;
+        
+        function appendAgent(text, color = "text-gray-300") {
+            agentConsole.innerHTML += `<p class="${color} mt-2">${text}</p>`;
+            agentConsole.scrollTop = agentConsole.scrollHeight;
+        }
+
+        function appendLog(text, color = "text-gray-400") {
+            logStream.innerHTML += `<p class="${color} mt-1">${text}</p>`;
+            logStream.scrollTop = logStream.scrollHeight;
+        }
+
+        const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+        anomalyBtn.addEventListener('click', async () => {
+            switchTab('tab-mission');
+            isAborted = false;
+            anomalyBtn.disabled = true;
+
+            // 1. Spiking Telemetry
+            document.getElementById('hr-val').innerText = '154 bpm';
+            document.getElementById('hr-val').classList.replace('text-green-400', 'text-red-500');
+            document.getElementById('hr-box').classList.replace('border-gray-800', 'border-red-600');
+            document.getElementById('hr-box').classList.add('fast-blinking');
+
+            document.getElementById('stress-val').innerText = '99%';
+            document.getElementById('stress-val').classList.replace('text-yellow-400', 'text-red-500');
+            document.getElementById('stress-box').classList.replace('border-gray-800', 'border-red-600');
+            
+            document.getElementById('fatigue-val').innerText = 'CRITICAL';
+            document.getElementById('fatigue-val').classList.replace('text-green-400', 'text-red-500');
+
+            document.getElementById('input-status').innerText = "ANOMALY DETECTED";
+            document.getElementById('input-status').className = "text-xs text-red-500 font-bold fast-blinking";
+
+            // 2. AI Daemon Reacts
+            await sleep(800);
+            appendAgent("\n⚠️ [AUTONOMOUS ALERT] Critical bio-metric spike detected.", "text-red-500 font-bold text-lg");
+            await sleep(1000);
+            appendAgent("[ANALYSIS] Heart rate (154bpm) + Stress (99%) indicates imminent Human Node collapse.", "text-yellow-400");
+            await sleep(1200);
+            appendAgent("[GITLAB MCP] Auto-drafting Branch 'sev1-recovery' & Issue #43.", "text-blue-400");
+            await sleep(1000);
+            appendAgent("🚨 [ACTION REQUIRED] Executing Dead Man's Switch.", "text-red-500 font-bold");
+
+            // 3. Countdown
+            document.getElementById('action-area').classList.remove('hidden');
+
+            let count = 5;
+            countdownInterval = setInterval(() => {
+                if (isAborted) {
+                    clearInterval(countdownInterval);
+                    return;
+                }
+                count--;
+                document.getElementById('timer').innerText = count;
+                if (count <= 0) {
+                    clearInterval(countdownInterval);
+                    executeFailover(); 
+                }
+            }, 1000);
+        });
+
+        function abortFailover() {
+            isAborted = true;
+            appendAgent("\n[ABORT] Human Node has manually overridden. Standing down.", "text-green-400 font-bold");
+            document.getElementById('action-area').classList.add('hidden');
+            document.getElementById('input-status').innerText = "MONITORING";
+            document.getElementById('input-status').className = "text-xs text-cyan-500 font-bold";
+            anomalyBtn.disabled = false;
+            document.getElementById('hr-box').classList.remove('fast-blinking');
+        }
+
+        async function executeFailover() {
+            document.getElementById('action-area').classList.add('hidden');
+            document.getElementById('input-status').innerText = "EXECUTING FAILOVER";
+            
+            appendAgent("\n>> DEAD MAN'S SWITCH TRIGGERED. Pushing commit to GitLab main...", "text-green-400");
+
+            await sleep(1000);
+            appendLog("==============================================", "text-yellow-500");
+            appendLog("[!] CRITICAL ALERT: HUMAN NODE FAILURE", "text-red-500 font-bold text-sm");
+            appendLog("[*] Initiating Self.SRE Priority Matrix...", "text-cyan-400");
+            appendLog("==============================================", "text-yellow-500");
+            
+            await sleep(1200);
+            
+            // RED ALERT
+            document.getElementById('header-box').className = "flex justify-between items-center monitor-box p-4 shadow-lg border-t-4 border-t-red-500 transition-colors duration-500 shrink-0";
+            document.getElementById('status-container').className = "flex items-center gap-3 border border-red-900 bg-red-900/20 px-4 py-2 rounded transition-colors duration-500";
+            document.getElementById('status-text').innerText = 'STATUS: SEV-1 OUTAGE';
+            document.getElementById('status-text').className = 'text-xl font-bold text-red-500 glow-red';
+            document.getElementById('status-dot').className = 'w-4 h-4 bg-red-500 rounded-full fast-blinking shadow-[0_0_10px_#f85149]';
+
+            document.getElementById('webhook-dot').classList.replace('bg-green-500', 'bg-red-500');
+            document.getElementById('webhook-dot').classList.add('blinking');
+            document.getElementById('webhook-text').classList.replace('text-green-500', 'text-red-500');
+            document.getElementById('webhook-text').innerText = "ROUTING TRAFFIC...";
+
+            // MOD 1: Delegate P2 Task
+            const standup = document.getElementById('task-standup');
+            standup.classList.replace('border-gray-700', 'border-red-900');
+            standup.classList.add('opacity-40');
+            standup.querySelector('.task-name').style.textDecoration = 'line-through';
+            standup.querySelector('.task-name').style.color = '#8b949e';
+            standup.querySelector('.bar-accent').classList.replace('bg-gray-600', 'bg-red-600');
+            const badge1 = standup.querySelector('.schedule-badge');
+            badge1.innerText = 'DELEGATED';
+            badge1.className = 'text-xs border px-2 py-1 rounded transition-colors duration-500 text-yellow-500 border-yellow-800 bg-yellow-900/30';
+            
+            appendLog("\n[SUCCESS] System Status Updated: 🔴 OFFLINE", "text-red-400 font-bold");
+            await sleep(800);
+            appendLog("[SUCCESS] P2 Task (Standup): Delegated via Slack API.", "text-yellow-400");
+            
+            // MOD 2: AI Digital Twin Auto-Scale
+            await sleep(1500);
+            appendLog("\n>> [WARNING] P1 TASK DETECTED (Q3 Pitch). CANCELLATION OVERRIDDEN.", "text-red-400 font-bold");
+            await sleep(800);
+            appendLog(">> INITIATING DIGITAL TWIN AUTO-SCALE PROTOCOL...", "text-purple-400 font-bold fast-blinking");
+            await sleep(1000);
+
+            const pitch = document.getElementById('task-pitch');
+            pitch.classList.replace('border-gray-700', 'border-purple-500');
+            pitch.classList.add('shadow-[0_0_15px_rgba(168,85,247,0.3)]');
+            pitch.querySelector('.bar-accent').classList.replace('bg-gray-600', 'bg-purple-500');
+            
+            const badge2 = pitch.querySelector('.schedule-badge');
+            badge2.innerText = 'AI PROXY DEPLOYED';
+            badge2.className = 'text-xs border px-2 py-1 rounded text-purple-300 border-purple-500 bg-purple-900/40 font-bold fast-blinking glow-purple shadow-[0_0_10px_#a855f7]';
+
+            appendLog("[SUCCESS] Spun up Gemini Voice Container (Region: us-central1).", "text-purple-400");
+            await sleep(800);
+            appendAgent("\n[GITLAB MCP] Retrieving 'Q3_Pitch_Deck.pdf' from repository main branch...", "text-blue-400");
+            await sleep(800);
+            appendLog("[SUCCESS] GitLab Repo Document successfully injected into Agent Context.", "text-purple-400");
+            await sleep(800);
+            appendLog("[SUCCESS] AI Proxy attached to Google Meet link.", "text-purple-400 font-bold");
+            
+            await sleep(1000);
+            appendLog("\n[+] FAILOVER COMPLETE. AI PROXY IS HANDLING P1 COMPUTE. HUMAN NODE CLEARED FOR REST.", "text-blue-400 font-bold");
+            
+            document.getElementById('input-status').innerText = "SYSTEM LOCKED";
+            document.getElementById('webhook-text').innerText = "FAILOVER COMPLETE";
+            document.getElementById('webhook-dot').classList.remove('blinking');
+        }
+
+        // ==========================================
+        // BIO-LINTER ANIMATION LOGIC
+        // ==========================================
+        async function runLinter() {
+            const consoleEl = document.getElementById('linter-console');
+            
+            // Reset Pipeline Visuals
+            document.getElementById('pipe-line-1').style.width = '0%';
+            document.getElementById('pipe-line-2').style.width = '0%';
+            document.getElementById('pipe-1').className = "w-12 h-12 bg-gray-800 border-2 border-gray-600 rounded-full flex items-center justify-center mx-auto mb-2 text-gray-500 font-bold";
+            document.getElementById('pipe-2').className = "w-12 h-12 bg-gray-800 border-2 border-gray-600 rounded-full flex items-center justify-center mx-auto mb-2 text-gray-500 font-bold";
+            document.getElementById('pipe-3').className = "w-12 h-12 bg-gray-800 border-2 border-gray-600 rounded-full flex items-center justify-center mx-auto mb-2 text-gray-500 font-bold";
+            document.getElementById('pipe-3').innerText = "▶";
+            document.getElementById('pipe-text-3').className = "text-xs text-gray-500 font-bold";
+
+            // Clear Terminal
+            consoleEl.innerHTML = `<p class="text-blue-400">$ gemini-sre run bio-linter ./schedule.json</p>`;
+            await sleep(600);
+            consoleEl.innerHTML += `<p class="mt-2 text-gray-500">Scanning schedule for human biological compliance...</p>`;
+            
+            // Start parsing
+            await sleep(800);
+            document.getElementById('pipe-1').className = "w-12 h-12 bg-green-900/40 border-2 border-green-500 rounded-full flex items-center justify-center mx-auto mb-2 text-green-500 font-bold";
+            document.getElementById('pipe-line-1').style.width = '100%';
+            
+            await sleep(800);
+            document.getElementById('pipe-2').className = "w-12 h-12 bg-green-900/40 border-2 border-green-500 rounded-full flex items-center justify-center mx-auto mb-2 text-green-500 font-bold";
+            document.getElementById('pipe-line-2').style.width = '50%';
+
+            await sleep(500);
+            consoleEl.innerHTML += `<p class="mt-1">Task 1: 08:00 AM - Strategy Review <span class="text-green-500">[OK]</span></p>`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+            await sleep(400);
+            consoleEl.innerHTML += `<p class="mt-1">Task 2: 10:00 AM - Engineering Standup <span class="text-green-500">[OK]</span></p>`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+            await sleep(400);
+            consoleEl.innerHTML += `<p class="mt-1">Task 3: 11:30 AM - Marketing Sync <span class="text-green-500">[OK]</span></p>`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+            await sleep(800);
+            consoleEl.innerHTML += `<p class="mt-1">Task 4: 01:00 PM - Deep Work Sprint <span class="text-yellow-500">[WARN: Context Switch]</span></p>`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+            
+            await sleep(1000);
+            
+            // LINTER FAILS
+            document.getElementById('pipe-3').innerText = "✕";
+            document.getElementById('pipe-3').className = "w-12 h-12 bg-red-900/40 border-2 border-red-500 rounded-full flex items-center justify-center mx-auto mb-2 text-red-500 font-bold fast-blinking shadow-[0_0_15px_rgba(248,81,73,0.4)]";
+            document.getElementById('pipe-text-3').className = "text-xs text-gray-200 font-bold text-red-400";
+            
+            consoleEl.innerHTML += `<p class="mt-1 text-red-500 font-bold">Task 5: 03:00 PM - Board Meeting [FATAL ERROR]</p>`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+            
+            await sleep(800);
+            consoleEl.innerHTML += `
+                <br>
+                <p class="text-red-400">-----------------------------------------------------</p>
+                <p class="text-red-500 font-bold">LINTER FAILURE EXCEPTION: COGNITIVE OVERLOAD DETECTED</p>
+                <p class="text-red-400">-----------------------------------------------------</p>
+            `;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+
+            await sleep(1000);
+            consoleEl.innerHTML += `<p class="mt-2 text-gray-300">Reason: 7 hours of continuous high-priority tasks detected with NO REST BLOCKS.</p>`;
+            await sleep(800);
+            consoleEl.innerHTML += `<p class="text-gray-300">Recommendation: Insert a 45-minute minimum [LUNCH / REBOOT] block before 01:00 PM.</p>`;
+            await sleep(800);
+            consoleEl.innerHTML += `<p class="mt-4 text-red-500 font-bold blinking">Pipeline Failed. Merge Request denied by Self.SRE. Human deployment halted.</p>`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+    </script>
+</body>
+</html>
