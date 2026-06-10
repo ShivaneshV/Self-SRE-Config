@@ -18,6 +18,8 @@
         .tab-active { color: #f8fafc; font-weight: 600; }
         .tab-active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: #3b82f6; border-radius: 2px 2px 0 0; }
         .tab-inactive { color: #64748b; font-weight: 500; }
+        .dropdown-content { display: none; position: absolute; right: 0; top: 100%; margin-top: 0.5rem; width: 240px; z-index: 50; }
+        .dropdown:hover .dropdown-content { display: block; }
     </style>
 </head>
 <body class="p-4 md:p-6 h-screen flex flex-col gap-4 overflow-hidden relative">
@@ -51,14 +53,17 @@
         </div>
     </header>
 
-    <nav class="flex gap-8 px-6 border-b border-slate-800 shrink-0">
-        <button onclick="switchTab('tab-mission')" id="btn-mission" class="tab-btn tab-active pb-3 text-sm">Live Mission Control</button>
-        <button onclick="switchTab('tab-cicd')" id="btn-cicd" class="tab-btn tab-inactive pb-3 text-sm">CI/CD Bio-Pipeline</button>
-        <button onclick="switchTab('tab-docs')" id="btn-docs" class="tab-btn tab-inactive pb-3 text-sm">Instructions & Docs</button>
+    <nav class="flex gap-6 md:gap-8 px-6 border-b border-slate-800 shrink-0 overflow-x-auto">
+        <button onclick="switchTab('tab-mission')" id="btn-mission" class="tab-btn tab-active pb-3 text-xs md:text-sm whitespace-nowrap">Live Mission Control</button>
+        <button onclick="switchTab('tab-cicd')" id="btn-cicd" class="tab-btn tab-inactive pb-3 text-xs md:text-sm whitespace-nowrap">CI/CD Bio-Pipeline</button>
+        <button onclick="switchTab('tab-policies')" id="btn-policies" class="tab-btn tab-inactive pb-3 text-xs md:text-sm whitespace-nowrap">SLA Policies (YAML)</button>
+        <button onclick="switchTab('tab-incidents')" id="btn-incidents" class="tab-btn tab-inactive pb-3 text-xs md:text-sm whitespace-nowrap">Incident Hub</button>
+        <button onclick="switchTab('tab-docs')" id="btn-docs" class="tab-btn tab-inactive pb-3 text-xs md:text-sm whitespace-nowrap">Operations Guide</button>
     </nav>
 
     <div class="flex-grow overflow-hidden relative">
         
+        <!-- Tab 1: Mission Control -->
         <div id="tab-mission" class="h-full grid grid-cols-1 lg:grid-cols-12 gap-5">
             <div class="lg:col-span-4 flex flex-col gap-4 overflow-y-auto">
                 <div class="glass-panel p-4">
@@ -109,6 +114,7 @@
             </div>
         </div>
 
+        <!-- Tab 2: CI/CD Pipeline -->
         <div id="tab-cicd" class="h-full hidden flex flex-col">
             <div class="glass-panel p-8 h-full flex flex-col border-t-2 border-t-indigo-500">
                 <div class="flex justify-between items-start mb-6 shrink-0">
@@ -119,80 +125,223 @@
                     <button onclick="injectChaos('linter')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-sm font-semibold">Run Pipeline</button>
                 </div>
                 <div class="terminal-panel rounded p-6 font-mono text-[13px] text-slate-400 flex-grow overflow-y-auto" id="linter-console">
-                    <p class="text-slate-550">Awaiting pipeline trigger...</p>
+                    <p class="text-slate-555">Awaiting pipeline trigger...</p>
                 </div>
             </div>
         </div>
 
+        <!-- Tab 3: SLA Policies -->
+        <div id="tab-policies" class="h-full hidden flex flex-col gap-4">
+            <div class="glass-panel p-6 md:p-8 h-full flex flex-col border-t-2 border-t-purple-500 overflow-y-auto">
+                <div class="mb-4">
+                    <h2 class="text-xl font-bold text-slate-100 mb-1">Cluster Configuration (YAML)</h2>
+                    <p class="text-xs text-slate-400">Biological constraints and escalation trigger points defined as SRE Code in the repository.</p>
+                </div>
+                <div class="terminal-panel p-4 font-mono text-[12px] text-slate-300 leading-relaxed overflow-x-auto flex-grow shadow-inner">
+                    <pre><code class="text-purple-300"># Self.SRE biological cluster config
+version: "v1alpha1"
+metadata:
+  name: "human-core-cluster"
+  node_target: "human_01"
+
+spec:
+  telemetry:
+    biometric_polling_interval: "500ms"
+    heart_rate:
+      baseline_bpm: 72
+      alert_threshold_bpm: 140
+      action: "arm_dead_mans_switch"
+      delay_seconds: 5
+    stress_index:
+      max_allowable_pct: 90
+      consecutive_breach_window: "15m"
+    sleep_sla:
+      target_hours: 7.5
+      critical_limit_hours: 4.5
+      action: "draft_rest_mr"
+
+  failover_protocols:
+    p1_escalation:
+      action: "deploy_ai_proxy_twin"
+      proxy_model: "gemini-1.5-pro"
+      context_retrieval: "gitlab_repo_docs"
+      google_meet_status: "active"
+    p2_escalation:
+      action: "delegate_to_active_standby"
+      standby_delegate: "sarah.dev@company.com"
+      notification_channel: "slack"
+    p3_escalation:
+      action: "cancel_and_postpone"
+      notification_channel: "email"
+      template: "OOO_incident_auto_reply"</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Incident Hub -->
+        <div id="tab-incidents" class="h-full hidden grid grid-cols-1 lg:grid-cols-12 gap-5 overflow-hidden">
+            <div class="lg:col-span-4 flex flex-col gap-4 overflow-y-auto h-full">
+                <div class="glass-panel p-4 flex flex-col h-full">
+                    <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Biological Incident Registry</h2>
+                    <div class="space-y-3">
+                        <div onclick="selectIncident('INC-9012')" class="bg-slate-800/50 p-3.5 rounded border border-rose-500/30 cursor-pointer hover:bg-slate-800/80 transition-all relative overflow-hidden" id="inc-9012-card">
+                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-rose-500"></div>
+                            <div class="pl-2">
+                                <p class="text-[10px] font-mono text-slate-400">INC-9012 • 2026-06-10</p>
+                                <p class="text-xs font-bold text-slate-200 mt-1">Sev-1 Heart Rate Spike</p>
+                                <span class="inline-block mt-2 text-[9px] font-bold text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded">RECOVERY MODE</span>
+                            </div>
+                        </div>
+                        <div onclick="selectIncident('INC-9011')" class="p-3.5 rounded border border-slate-800 cursor-pointer hover:bg-slate-800/80 transition-all relative overflow-hidden opacity-75" id="inc-9011-card">
+                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-amber-500"></div>
+                            <div class="pl-2">
+                                <p class="text-[10px] font-mono text-slate-400">INC-9011 • 2026-06-10</p>
+                                <p class="text-xs font-bold text-slate-300 mt-1">Sev-2 Sleep SLA Under-run</p>
+                                <span class="inline-block mt-2 text-[9px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">RESOLVED</span>
+                            </div>
+                        </div>
+                        <div onclick="selectIncident('INC-9010')" class="p-3.5 rounded border border-slate-800 cursor-pointer hover:bg-slate-800/80 transition-all relative overflow-hidden opacity-75" id="inc-9010-card">
+                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500"></div>
+                            <div class="pl-2">
+                                <p class="text-[10px] font-mono text-slate-400">INC-9010 • 2026-06-09</p>
+                                <p class="text-xs font-bold text-slate-300 mt-1">Sev-3 Context-Switch Overload</p>
+                                <span class="inline-block mt-2 text-[9px] font-bold text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">RESOLVED</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="lg:col-span-8 flex flex-col h-full overflow-hidden">
+                <div class="glass-panel p-4 flex-grow flex flex-col min-h-0">
+                    <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3" id="incident-report-title">Postmortem: INC-9012</h2>
+                    <div class="terminal-panel p-5 font-mono text-[12px] text-slate-300 overflow-y-auto flex-grow shadow-inner leading-relaxed" id="incident-report-content">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 5: Operations Guide -->
         <div id="tab-docs" class="h-full hidden flex flex-col">
             <div class="glass-panel p-8 md:p-12 h-full overflow-y-auto flex flex-col border-t-2 border-t-slate-500">
-                <h2 class="text-2xl font-bold text-slate-100 mb-6">Operations Manual: Self.SRE</h2>
-                
-                <div class="space-y-6 text-sm text-slate-300">
-                    <div>
-                        <h3 class="text-white font-bold mb-2 flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span> 1. Core Architecture</h3>
-                        <p class="bg-slate-900/50 p-4 rounded-lg border border-slate-800">
-                            Self.SRE applies Enterprise DevOps to human biology. Your schedule is stored as <code class="text-indigo-400 bg-slate-800 px-1 rounded">schedule.json</code> in a GitLab repository. A Gemini Daemon continuously monitors biometric telemetry. If a node failure occurs (burnout, panic attack), it autonomously creates a GitLab Branch, drafts a Merge Request, and triggers physical failovers (canceling meetings, deploying AI Proxies).
-                        </p>
-                    </div>
+                <div class="max-w-4xl">
+                    <h2 class="text-2xl font-bold text-slate-100 mb-2">Operations Guide & System Architecture</h2>
+                    <p class="text-xs text-slate-400 mb-6 font-medium border-b border-slate-800 pb-3">Google Cloud Rapid Agent Hackathon • GitLab Track</p>
+                    
+                    <div class="space-y-6 text-sm text-slate-300">
+                        <div>
+                            <h3 class="text-white font-bold mb-2 flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span> 
+                                1. What is Self.SRE? (Project Brief)
+                            </h3>
+                            <p class="bg-slate-900/40 p-4 rounded-lg border border-slate-800/60 leading-relaxed text-xs">
+                                When a production server crashes, SRE systems instantly reroute traffic and page developers. But when a <strong>human engineer</strong> crashes (due to migraine, burnout, or emergencies), our schedules fall into chaos.
+                                <br><br>
+                                <strong>Self.SRE</strong> treats the human developer as a production node, and their daily calendar configuration (<code class="text-indigo-400 font-mono text-xs">schedule.json</code>) as version-controlled code in a GitLab repository. Using Google Cloud Agent Builder and the <strong>GitLab MCP</strong>, a Gemini AI Daemon continuously monitors biometric feeds and acts as an autonomous site reliability manager. 
+                                <br><br>
+                                When an incident spike occurs, the daemon initiates a GitLab hotfix branch, commits schedule revisions, and opens a Merge Request. Once approved, local webhook handlers execute real-world routing (Slack OOO indicators, calendar blocks, and client email cancellations) to clear the node for recovery.
+                            </p>
+                        </div>
 
-                    <div>
-                        <h3 class="text-white font-bold mb-2 flex items-center gap-2"><span class="w-2 h-2 bg-amber-500 rounded-full"></span> 2. Chaos Monkey Testing</h3>
-                        <p class="mb-3">Use the <strong>Chaos Monkey Incident</strong> dropdown in the top right to simulate disaster scenarios:</p>
-                        <ul class="list-disc list-inside space-y-2 bg-slate-900/50 p-4 rounded-lg border border-slate-800">
-                            <li><strong class="text-rose-400">Sev-1 Burnout Spike:</strong> Triggers the Dead Man's Switch, spikes the HTML5 Canvas ECG, and executes an automated failover. Displays the Blameless Postmortem.</li>
-                            <li><strong class="text-amber-400">Context-Switch Storm:</strong> Switches to the Bio-Linter tab and fails the CI/CD pipeline due to cognitive overload.</li>
-                            <li><strong class="text-indigo-400">SLA Sleep Breach:</strong> Drops heart rate to recovery levels and issues an SLA warning for sleep deficit.</li>
-                        </ul>
-                    </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <h3 class="text-white font-bold mb-2 flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 bg-purple-500 rounded-full"></span> 
+                                    2. SRE-to-Biology Mapping
+                                </h3>
+                                <table class="w-full text-left text-xs bg-slate-900/40 border border-slate-800 rounded-lg overflow-hidden">
+                                    <thead>
+                                        <tr class="border-b border-slate-800 text-slate-300 font-bold bg-slate-900/80">
+                                            <th class="p-2">SRE Concept</th>
+                                            <th class="p-2">Biological Mapping</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-slate-400 font-mono text-[11px]">
+                                        <tr class="border-b border-slate-800/40"><td class="p-2 text-indigo-400 font-semibold">Error Budget</td><td class="p-2">Allowable high-stress hours before shutdown.</td></tr>
+                                        <tr class="border-b border-slate-800/40"><td class="p-2 text-indigo-400 font-semibold">Uptime SLA</td><td class="p-2">Attending high-priority commitments.</td></tr>
+                                        <tr class="border-b border-slate-800/40"><td class="p-2 text-indigo-400 font-semibold">Core Dump</td><td class="p-2">Blameless postmortem report generation.</td></tr>
+                                        <tr><td class="p-2 text-indigo-400 font-semibold">Auto-Scaler</td><td class="p-2">AI Proxy (Gemini) taking meetings.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
 
-                    <div>
-                        <h3 class="text-white font-bold mb-2 flex items-center gap-2"><span class="w-2 h-2 bg-emerald-500 rounded-full"></span> 3. Real-Time API Sync</h3>
-                        <p class="bg-slate-900/50 p-4 rounded-lg border border-slate-800">
-                            This dashboard features asynchronous polling. When run locally alongside <code class="text-emerald-400 bg-slate-800 px-1 rounded">sre_webhook_receiver.py</code>, it syncs terminal logs into the UI in real-time. You can trigger incidents using the <code class="text-emerald-400 bg-slate-800 px-1 rounded">simulate_incident.py</code> CLI tool, and the web UI will react automatically without manual clicks.
-                        </p>
+                            <div>
+                                <h3 class="text-white font-bold mb-2 flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span> 
+                                    3. GitLab Integration & Flow
+                                </h3>
+                                <div class="bg-slate-900/40 p-4 rounded-lg border border-slate-800/60 text-xs leading-relaxed">
+                                    <ul class="list-decimal list-inside space-y-1 text-slate-400">
+                                        <li><strong>Telemetry Monitor</strong>: The daemon polls biometrics (Heart Rate, Stress index).</li>
+                                        <li><strong>Linter Audits</strong>: The GitLab CI/CD runner parses new commits to catch cognitive overload storms.</li>
+                                        <li><strong>MR Failover Gate</strong>: If telemetry spikes, Gemini opens an MR, waiting for human approval.</li>
+                                        <li><strong>API Failover Execution</strong>: Merging triggers the webhook, wiping calendar nodes and spinning up the digital twin proxy.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="postmortem-modal" class="hidden absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div class="bg-slate-900 border border-slate-700 w-full max-w-2xl rounded-xl shadow-2xl p-6 relative">
-                <h2 class="text-xl font-bold text-slate-100 border-b border-slate-800 pb-3 mb-4">Blameless Postmortem Report</h2>
-                <div class="grid grid-cols-2 gap-4 text-sm mb-4">
-                    <div class="bg-slate-800/50 p-3 rounded">
-                        <p class="text-slate-400 text-xs">Incident Type</p>
-                        <p class="text-rose-400 font-bold">Sev-1 Biological Spike</p>
-                    </div>
-                    <div class="bg-slate-800/50 p-3 rounded">
-                        <p class="text-slate-400 text-xs">MTTR (Time to Resolve)</p>
-                        <p class="text-emerald-400 font-bold">0m 5s</p>
-                    </div>
-                </div>
-                <div class="font-mono text-[12px] text-slate-400 bg-black/50 p-4 rounded mb-4">
-                    <p class="text-slate-300 font-bold mb-1">Root Cause Analysis:</p>
-                    <p class="mb-3">Stress telemetry exceeded 95% threshold. Dead Man's Switch activated.</p>
-                    <p class="text-slate-300 font-bold mb-1">Action Taken (GitLab Commit Log):</p>
-                    <p>- Branch <span class="text-blue-400">'hotfix/rest'</span> created.</p>
-                    <p>- P2 Tasks delegated. P1 Task delegated to <span class="text-indigo-400">Gemini Digital Twin Proxy</span>.</p>
-                </div>
-                <div class="text-right">
-                    <button onclick="document.getElementById('postmortem-modal').classList.add('hidden')" class="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded text-sm font-bold">Acknowledge</button>
                 </div>
             </div>
         </div>
 
     </div>
 
+    <!-- Floating SRE Alert Banner -->
+    <div id="failover-banner" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 border border-indigo-500/40 px-6 py-4 rounded-xl shadow-[0_15px_30px_-5px_rgba(99,102,241,0.25)] flex items-center gap-4 z-50 transition-all duration-500 translate-y-32 opacity-0">
+        <div class="w-3.5 h-3.5 bg-indigo-500 rounded-full animate-ping shrink-0 shadow-[0_0_10px_#6366f1]"></div>
+        <div class="text-xs font-semibold text-slate-200 shrink-0">
+            SRE Alert: Bio-Linter Failed. AI Proxy twin auto-scaled workload.
+        </div>
+        <button onclick="returnToDashboard()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold px-4 py-2 rounded-lg transition-colors shrink-0 shadow-md">
+            Return to Mission Control
+        </button>
+    </div>
+
+    <!-- Blameless Postmortem Modal -->
+    <div id="postmortem-modal" class="hidden absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-2xl rounded-xl shadow-2xl p-6 relative">
+            <h2 class="text-xl font-bold text-slate-100 border-b border-slate-800 pb-3 mb-4">Blameless Postmortem Report Generated</h2>
+            <div class="grid grid-cols-2 gap-4 text-xs mb-4">
+                <div class="bg-slate-800/50 p-3 rounded">
+                    <p class="text-slate-400 text-[10px]">Incident Type</p>
+                    <p class="text-rose-400 font-bold">Sev-1 Biological Spike</p>
+                </div>
+                <div class="bg-slate-800/50 p-3 rounded">
+                    <p class="text-slate-400 text-[10px]">MTTR (Time to Resolve)</p>
+                    <p class="text-emerald-400 font-bold">0m 5s</p>
+                </div>
+            </div>
+            <div class="font-mono text-[11px] text-slate-400 bg-black/50 p-4 rounded mb-4 max-h-48 overflow-y-auto">
+                <p class="text-slate-350 font-bold mb-1">Root Cause Analysis:</p>
+                <p class="mb-3">Stress telemetry exceeded 95% threshold. Dead Man's Switch activated.</p>
+                <p class="text-slate-355 font-bold mb-1">Action Taken (GitLab Commit Log):</p>
+                <p>- Branch <span class="text-blue-400">'hotfix/rest'</span> created.</p>
+                <p>- P2 Tasks delegated. P1 Task delegated to <span class="text-indigo-400">Gemini Digital Twin Proxy</span>.</p>
+                <p>- Biometrics stabilized to recovery range.</p>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-[10px] text-slate-400">Incident INC-9012 logged in Incident Hub tab.</span>
+                <button onclick="document.getElementById('postmortem-modal').classList.add('hidden')" class="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded text-sm font-bold">Acknowledge</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // === 1. TABS ===
         function switchTab(tabId) {
-            ['tab-mission', 'tab-cicd', 'tab-docs'].forEach(id => {
+            ['tab-mission', 'tab-cicd', 'tab-policies', 'tab-incidents', 'tab-docs'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
                 document.getElementById(id.replace('tab-', 'btn-')).classList.replace('tab-active', 'tab-inactive');
             });
             document.getElementById(tabId).classList.remove('hidden');
             document.getElementById(tabId.replace('tab-', 'btn-')).classList.replace('tab-inactive', 'tab-active');
+            
+            // Initialize incident selections when opening the hub
+            if (tabId === 'tab-incidents') {
+                selectIncident('INC-9012');
+            }
         }
 
         // === 1B. CLICK-TRIGGERED DROPDOWN ===
@@ -320,6 +469,112 @@
         // Initialize display with default mock schedule
         renderSchedule(localSchedule);
 
+        // === 3B. INCIDENT HUB SELECTION DATA ===
+        const incidentReports = {
+            'INC-9012': `=======================================================
+BLAMELESS POSTMORTEM REPORT: INC-9012
+=======================================================
+Incident ID:   INC-9012
+Impacted Node: human_01
+Severity:      SEV-1 (CRITICAL BIOMETRIC ANOMALY)
+Date/Time:     2026-06-10 14:42:00 UTC
+MTTR:          0m 5s
+Status:        RECOVERY MODE (AI FAILOVER EXECUTED)
+
+-------------------------------------------------------
+1. EXECUTIVE SUMMARY
+-------------------------------------------------------
+Biometric metrics for Node human_01 breached alert parameters:
+- Heart Rate spiked to 154 BPM (Tachycardia threshold: 140)
+- Stress Index peaked at 99% (Overload threshold: 95%)
+A 5-second Dead Man's Switch warning was initiated. The node was
+incapacitated. Autonomous GitOps failover was successfully triggered.
+
+-------------------------------------------------------
+2. ACTIONS TAKEN (GitLab Commit logs)
+-------------------------------------------------------
+- Autonomously spun up branch 'hotfix/rest'
+- Committed modified schedule.json updating status flags:
+  * P2 Standup: DELEGATED -> sarah.dev@company.com
+  * P1 Roadmap Pitch: AI PROXY LIVE (Gemini twin proxy active)
+  * P3 Gym Workout: CANCELLED
+- Dispatched Slack status update: 🤒 'SEV-1 Biological Incident'
+- Automated OOO email auto-responder activated via Gmail API.
+
+-------------------------------------------------------
+3. ROOT CAUSE ANALYSIS (RCA)
+-------------------------------------------------------
+Cognitive limits breached due to consecutive, back-to-back working
+compute cycles with zero REST block buffer. Sleep metrics for previous
+duty cycle were recorded at a critical debt level.`,
+
+            'INC-9011': `=======================================================
+BLAMELESS POSTMORTEM REPORT: INC-9011
+=======================================================
+Incident ID:   INC-9011
+Impacted Node: human_01
+Severity:      SEV-2 (SLA SLEEP DEBT)
+Date/Time:     2026-06-10 08:30:00 UTC
+MTTR:          12m 30s
+Status:        RESOLVED (GitOps Config Deployed)
+
+-------------------------------------------------------
+1. EXECUTIVE SUMMARY
+-------------------------------------------------------
+Node sleep availability fell to 4.5 hours, violating the 7.5 hours SLA policy.
+A sleep debt warning was issued. The system proposed a hotfix MR #41 to insert
+a mandatory rest block into target_schedule.json.
+
+-------------------------------------------------------
+2. ACTIONS TAKEN
+-------------------------------------------------------
+- GitLab MR #41 merged by active backup delegate.
+- Added recovery blocks in Google Calendar schedule.
+- Disabled low-priority notifications between 08:00 PM and 08:00 AM.`,
+
+            'INC-9010': `=======================================================
+BLAMELESS POSTMORTEM REPORT: INC-9010
+=======================================================
+Incident ID:   INC-9010
+Impacted Node: human_01
+Severity:      SEV-3 (CONTEXT SWITCHING STORM)
+Date/Time:     2026-06-09 18:15:00 UTC
+MTTR:          4m 10s
+Status:        RESOLVED
+
+-------------------------------------------------------
+1. EXECUTIVE SUMMARY
+-------------------------------------------------------
+Linter failed during pipeline run due to 4 overlapping meetings in schedule.json,
+representing an unacceptable cognitive context switch storm.
+
+-------------------------------------------------------
+2. ACTIONS TAKEN
+-------------------------------------------------------
+- Auto-conflict resolution logic reordered 2 non-critical events.
+- Inserted mandatory 15-minute cool-down block.
+- Merge request approved by developer.`
+        };
+
+        function selectIncident(id) {
+            document.getElementById('incident-report-title').innerText = `Postmortem: ${id}`;
+            document.getElementById('incident-report-content').innerText = incidentReports[id];
+            
+            // Toggle highlight styles
+            ['INC-9012', 'INC-9011', 'INC-9010'].forEach(incId => {
+                const card = document.getElementById(`inc-${incId.toLowerCase()}-card`);
+                if (card) {
+                    if (incId === id) {
+                        card.classList.remove('opacity-75');
+                        card.className = "bg-slate-800/50 p-3.5 rounded border border-rose-500/30 cursor-pointer hover:bg-slate-800/80 transition-all relative overflow-hidden";
+                    } else {
+                        card.classList.add('opacity-75');
+                        card.className = "p-3.5 rounded border border-slate-800 cursor-pointer hover:bg-slate-800/80 transition-all relative overflow-hidden opacity-75";
+                    }
+                }
+            });
+        }
+
         // === 4. CHAOS SCENARIOS & UI LOGIC ===
         const sleep = ms => new Promise(r => setTimeout(r, ms));
         let isAborted = false;
@@ -389,7 +644,6 @@
                 }, 50);
             } 
             else if(type === 'linter') {
-                // Keep UI on tab-mission as requested by user. Let user switch manually!
                 runLinterUI();
             } 
             else if(type === 'rest') {
