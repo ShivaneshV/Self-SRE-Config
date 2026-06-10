@@ -101,7 +101,7 @@
                         <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Gemini Daemon & Webhook Logs</h2>
                     </div>
                     <div class="flex-grow terminal-panel m-4 p-4 font-mono text-xs text-slate-400 overflow-y-auto shadow-inner" id="log-stream">
-                        <p class="text-slate-550"># Identity Sync: GitLab MCP Connected. Waiting for events...</p>
+                        <p class="text-slate-500"># Identity Sync: GitLab MCP Connected. Waiting for events...</p>
                     </div>
 
                     <div id="action-area" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center z-10">
@@ -125,7 +125,7 @@
                     <button onclick="injectChaos('linter')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-sm font-semibold">Run Pipeline</button>
                 </div>
                 <div class="terminal-panel rounded p-6 font-mono text-[13px] text-slate-400 flex-grow overflow-y-auto" id="linter-console">
-                    <p class="text-slate-555">Awaiting pipeline trigger...</p>
+                    <p class="text-slate-500">Awaiting pipeline trigger...</p>
                 </div>
             </div>
         </div>
@@ -314,9 +314,9 @@ spec:
                 </div>
             </div>
             <div class="font-mono text-[11px] text-slate-400 bg-black/50 p-4 rounded mb-4 max-h-48 overflow-y-auto">
-                <p class="text-slate-350 font-bold mb-1">Root Cause Analysis:</p>
+                <p class="text-slate-300 font-bold mb-1">Root Cause Analysis:</p>
                 <p class="mb-3">Stress telemetry exceeded 95% threshold. Dead Man's Switch activated.</p>
-                <p class="text-slate-355 font-bold mb-1">Action Taken (GitLab Commit Log):</p>
+                <p class="text-slate-300 font-bold mb-1">Action Taken (GitLab Commit Log):</p>
                 <p>- Branch <span class="text-blue-400">'hotfix/rest'</span> created.</p>
                 <p>- P2 Tasks delegated. P1 Task delegated to <span class="text-indigo-400">Gemini Digital Twin Proxy</span>.</p>
                 <p>- Biometrics stabilized to recovery range.</p>
@@ -621,7 +621,10 @@ representing an unacceptable cognitive context switch storm.
                 document.getElementById('status-text').className = "text-xs font-bold text-rose-400 uppercase";
                 document.getElementById('status-dot').className = "w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse";
 
-                if(localMode) appendLog("WARN: Critical biometric spike detected. Initiating Dead Man's Switch.", "text-rose-400 font-bold");
+                if(localMode) {
+                    appendLog("WARN: Critical biometric spike detected. Node collapse warning issued.", "text-rose-400 font-bold");
+                    appendLog("Dead Man's Switch armed. Awaiting human override cancel signal...", "text-slate-400");
+                }
                 
                 document.getElementById('action-area').classList.remove('hidden');
                 let count = 5.00;
@@ -644,6 +647,7 @@ representing an unacceptable cognitive context switch storm.
                 }, 50);
             } 
             else if(type === 'linter') {
+                // Keep UI on tab-mission as requested by user. Let user switch manually!
                 runLinterUI();
             } 
             else if(type === 'rest') {
@@ -661,6 +665,8 @@ representing an unacceptable cognitive context switch storm.
                 document.getElementById('status-dot').className = "w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse";
 
                 if (localMode) {
+                    appendLog("SLA Breach Alert: Sleep availability at critical threshold.", "text-amber-400");
+                    appendLog("Auto-generating Merge Request to schedule rest block...", "text-indigo-400");
                     localSchedule.forEach(item => {
                         if (item.id === "EVT-1003") {
                             item.task = "Mandatory Recovery Block (Rest)";
@@ -668,6 +674,7 @@ representing an unacceptable cognitive context switch storm.
                         }
                     });
                     renderSchedule(localSchedule);
+                    appendLog("[SUCCESS] Applied rest blocks to commitments.", "text-emerald-400");
                 }
             }
             else if(type === 'failover') {
@@ -726,7 +733,7 @@ representing an unacceptable cognitive context switch storm.
             } catch(e){}
             
             if(localMode) {
-                appendLog("ABORT: Human override acknowledged.", "text-emerald-400");
+                appendLog("ABORT: Human override acknowledged. Standing down.", "text-emerald-400");
                 handleStateChange('none');
             }
         }
@@ -738,6 +745,21 @@ representing an unacceptable cognitive context switch storm.
             document.getElementById('status-text').innerText = 'SEV-1 OUTAGE';
             document.getElementById('status-text').className = 'text-xs font-bold text-rose-400 tracking-wide uppercase glow-red';
             document.getElementById('status-dot').className = 'w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse shadow-[0_0_10px_#ef4444]';
+
+            if (localMode) {
+                appendLog("-------------------------------------------------------", "text-slate-700");
+                appendLog("CRITICAL BIO-ALERT: HUMAN NODE FAILURE EXECUTED", "text-rose-500 font-bold");
+                appendLog("-------------------------------------------------------", "text-slate-700");
+                appendLog(">> Initiating blameless personal failover protocol...", "text-slate-400");
+                await sleep(500);
+                appendLog("[SUCCESS] P2 Daily Standup -> Delegated to active delegate sarah.dev@company.com.", "text-amber-400");
+                await sleep(500);
+                appendLog("[WARNING] P1 Roadmap Pitch Detected. Scaling Gemini AI Proxy...", "text-purple-400 font-semibold animate-pulse");
+                await sleep(500);
+                appendLog("[SUCCESS] Gemini Digital Twin spun up and attached to Google Meet link.", "text-purple-400");
+                await sleep(500);
+                appendLog("[+] FAILOVER PROTOCOLS ACTIVE. BLAMELESS INCIDENT REPORT LOGGED.", "text-emerald-400 font-bold");
+            }
 
             await sleep(1500);
             document.getElementById('postmortem-modal').classList.remove('hidden');
@@ -774,7 +796,7 @@ representing an unacceptable cognitive context switch storm.
                 </div>
             `;
             
-            if(localMode) appendLog(">> GitLab Bio-Linter Pipeline Failed.", "text-rose-400 font-bold");
+            if(localMode) appendLog(">> GitLab Bio-Linter Pipeline Failed. Blocked Merge Request.", "text-rose-400 font-bold");
         }
 
         async function applyLinterHotfix() {
@@ -811,6 +833,8 @@ representing an unacceptable cognitive context switch storm.
             
             // Reset header status to Operational
             if (localMode) {
+                appendLog(">> GitLab hotfix Merge Request #42 approved and merged.", "text-emerald-400 font-semibold");
+                appendLog("[SUCCESS] Biological Limits Linter pipeline passed.", "text-emerald-400");
                 handleStateChange('none');
             }
         }
@@ -870,7 +894,7 @@ representing an unacceptable cognitive context switch storm.
                         document.getElementById('stress-container').className = "bg-indigo-950/20 p-3 rounded border border-indigo-500/30 transition-all duration-500";
                     } else {
                         document.getElementById('hr-label').innerText = data.telemetry.heart_rate + ' BPM (NORMAL)';
-                        document.getElementById('hr-label').className = "text-[10px] text-emerald-450 font-mono";
+                        document.getElementById('hr-label').className = "text-[10px] text-emerald-400 font-mono";
                         document.getElementById('hr-container').className = "bg-slate-800/50 p-3 rounded border border-slate-700/50 transition-all duration-500";
                         document.getElementById('stress-container').className = "bg-slate-800/50 p-3 rounded border border-slate-700/50 transition-all duration-500";
                     }
